@@ -41,31 +41,28 @@ export const envSchema = z.object({
       }
     ),
 
-  NODE_ENV: z.enum(["development", "test", "production"], {
+  NODE_ENV: z.enum(["development", "test"], {
     required_error: "NODE_ENV is required",
-    invalid_type_error:
-      "NODE_ENV must be one of: development, production, test",
+    invalid_type_error: "NODE_ENV must be one of: development, test",
   }),
 
-  LOG_LEVEL: z.enum(["error", "warn", "info", "http", "debug"], {
-    required_error: "LOG_LEVEL is required",
-    invalid_type_error:
-      "LOG_LEVEL must be one of: error, warn, info, http, debug",
+  LOG_LEVEL: z.enum(
+    ["error", "warn", "info", "http", "verbose", "debug", "silly"],
+    {
+      required_error: "LOG_LEVEL is required",
+      invalid_type_error:
+        "LOG_LEVEL must be one of: error, warn, info, http, verbose, debug, silly",
+    }
+  ),
+
+  DB_CONNECTION_STRING_DEVELOPMENT: z.string({
+    required_error: "DB_CONNECTION_STRING_DEVELOPMENT is required",
+    invalid_type_error: "DB_CONNECTION_STRING_DEVELOPMENT must be a string",
   }),
 
-  MONGO_CONNECTION_STRING_DEVELOPMENT: z.string({
-    required_error: "MONGO_CONNECTION_STRING_DEVELOPMENT is required",
-    invalid_type_error: "MONGO_CONNECTION_STRING_DEVELOPMENT must be a string",
-  }),
-
-  MONGO_CONNECTION_STRING_TEST: z.string({
-    required_error: "MONGO_CONNECTION_STRING_TEST is required",
-    invalid_type_error: "MONGO_CONNECTION_STRING_TEST must be a string",
-  }),
-
-  MONGO_CONNECTION_STRING_PRODUCTION: z.string({
-    required_error: "MONGO_CONNECTION_STRING_PRODUCTION is required",
-    invalid_type_error: "MONGO_CONNECTION_STRING_PRODUCTION must be a string",
+  DB_CONNECTION_STRING_TEST: z.string({
+    required_error: "DB_CONNECTION_STRING_TEST is required",
+    invalid_type_error: "DB_CONNECTION_STRING_TEST must be a string",
   }),
 
   MAIL_HOST: z.string({

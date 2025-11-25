@@ -35,7 +35,7 @@ export const validateSchema =
         return next(
           new BadRequestError(
             "Request Validation Failed",
-            "See the 'details' field of the error object for validation feedback by field.",
+            "See 'details' for validation feedbacks by field.",
             "VALIDATE_SCHEMA_ERROR",
             details
           )

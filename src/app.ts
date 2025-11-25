@@ -5,7 +5,6 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
-import tournamentRoutes from "./routes/tournament.routes";
 
 import { appErrorHandler } from "./middlewares/error.middlewares";
 import { NotFoundError } from "./config/CustomError";
@@ -25,7 +24,11 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
     new NotFoundError(
       "Resource Not Found",
       "Please verify the URL or check if the resource exists.",
-      "RESOURCE_NOT_FOUND"
+      "RESOURCE_ERROR",
+      {
+        method: req.method,
+        path: req.originalUrl,
+      }
     )
   );
 });

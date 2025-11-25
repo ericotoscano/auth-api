@@ -1,6 +1,7 @@
 import app from "./app";
 import { ENV } from "./utils/env.utils";
 import { connectToDB } from "./utils/db.utils";
+import { logger } from "./utils/logger";
 
 const API_PORT = Number(ENV.API_PORT);
 
@@ -10,12 +11,16 @@ const API_PORT = Number(ENV.API_PORT);
       await connectToDB();
 
       app.listen(API_PORT, () => {
-        console.info(`Server is running on http://localhost:${API_PORT}.`);
+        logger.info(`Server is running on ${ENV.APP_ORIGIN}${API_PORT}`);
       });
     }
-  } catch (error) {
-    console.error("Failed to connect to the database.");
-    console.error(error);
+  } catch (error: any) {
+    logger.error("Failed to connect to the database", {
+      errorCode: "DB_CONNECTION_ERROR",
+      details: { message: error.message },
+      stack: error.stack,
+    });
+    
     process.exit(1);
   }
 })();

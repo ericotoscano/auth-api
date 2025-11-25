@@ -51,18 +51,17 @@ export const createUserService = async (
       error instanceof mongoose.mongo.MongoServerError &&
       error.code === 11000
     ) {
-      const field = Object.keys(error.keyPattern)[0];
 
       throw new ConflictError(
         "User Creation Conflict",
-        `This ${field} has already been used.`,
+        "This username or email is already in use.",
         "USER_CONFLICT_ERROR",
         error.keyValue
       );
     }
 
     throw new InternalServerError(
-      "Failed to Create User",
+      "User Creation Failed",
       "An unexpected error ocurred while creating user. Please try again later.",
       "CREATE_USER_ERROR"
     );

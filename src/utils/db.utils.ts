@@ -1,17 +1,17 @@
 import mongoose from "mongoose";
 import { ENV } from "./env.utils";
 import User from "../models/user.model";
+import { logger } from "./logger";
 
 export const connectToDB = async () => {
   try {
     const mongoUri = {
-      test: ENV.MONGO_CONNECTION_STRING_TEST,
-      development: ENV.MONGO_CONNECTION_STRING_DEVELOPMENT,
-      production: ENV.MONGO_CONNECTION_STRING_PRODUCTION,
+      test: ENV.DB_CONNECTION_STRING_TEST,
+      development: ENV.DB_CONNECTION_STRING_DEVELOPMENT,
     }[ENV.NODE_ENV];
 
     if (!mongoUri)
-      throw new Error(`Mongo URI not defined for env: ${ENV.NODE_ENV}`);
+      throw new Error(`DB connection URI is not defined for environment: ${ENV.NODE_ENV}`);
 
     const mongoDB = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
@@ -20,11 +20,10 @@ export const connectToDB = async () => {
 
     await User.init();
 
-    console.info(
-      `Connected to MongoDB (${ENV.NODE_ENV}): ${mongoDB.connection.host}`
+    logger.info(
+      `Connected to DB (${ENV.NODE_ENV}): ${mongoDB.connection.host}`
     );
   } catch (error) {
-    console.error("Error connecting to MongoDB", error);
     throw error;
   }
 };

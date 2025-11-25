@@ -51,7 +51,6 @@ export const signup = async (
       data: SignedUpUserDTO.toJSON(createdUser),
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -135,7 +134,7 @@ export const login = async (
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
+        secure: false, 
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })
@@ -163,7 +162,7 @@ export const logout = async (
       .status(204)
       .clearCookie("refreshToken", {
         httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
+        secure: false, 
         sameSite: "strict",
       })
       .end();
@@ -208,7 +207,7 @@ export const refreshUserAccessToken = async (
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
+        secure: false, 
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })

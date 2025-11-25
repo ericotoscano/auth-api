@@ -62,7 +62,8 @@ export const verifyUserService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "VERIFY_USER_CONFLICT"
+      "VERIFICATION_CONFLICT_ERROR",
+      { email: user.email, isVerified: user.isVerified }
     );
   }
 
@@ -76,7 +77,8 @@ export const verifyUserService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during verification.",
-        "VERIFY_USER_NOT_FOUND"
+        "VERIFY_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -98,7 +100,8 @@ export const resendVerificationEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The provided email is incorrect or the user does not exist.",
-        "RESEND_EMAIL_USER_NOT_FOUND"
+        "RESEND_EMAIL_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -109,7 +112,8 @@ export const resendVerificationEmailService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "RESEND_EMAIL_USER_CONFLICT"
+      "VERIFICATION_CONFLICT_ERROR",
+      { email: user.email, isVerified: user.isVerified }
     );
   }
 
@@ -130,7 +134,8 @@ export const resendVerificationEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during resend verification email.",
-        "RESEND_EMAIL_USER_NOT_FOUND"
+        "RESEND_EMAIL_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -223,7 +228,8 @@ export const loginService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during login.",
-        "LOGIN_USER_NOT_FOUND"
+        "LOGIN_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -246,7 +252,8 @@ export const logoutService = async (user: UserType): Promise<void> => {
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during logout.",
-        "LOGOUT_USER_NOT_FOUND"
+        "LOGOUT_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -266,7 +273,8 @@ export const sendResetPasswordEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The provided email is incorrect or the user does not exist.",
-        "SEND_RESET_PASSWORD_USER_NOT_FOUND"
+        "SEND_RESET_PASSWORD_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -290,7 +298,8 @@ export const sendResetPasswordEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during send reset password email.",
-        "SEND_RESET_PASSWORD_USER_NOT_FOUND"
+        "SEND_RESET_PASSWORD_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -349,7 +358,8 @@ export const resetPasswordService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during reset password.",
-        "RESET_PASSWORD_USER_NOT_FOUND"
+        "RESET_PASSWORD_USER_NOT_FOUND",
+        {}
       );
     }
 
@@ -390,7 +400,8 @@ export const refreshUserAccessTokenService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during refresh access token.",
-        "REFRESH_ACCESS_TOKEN_USER_NOT_FOUND"
+        "REFRESH_ACCESS_TOKEN_USER_NOT_FOUND",
+        {}
       );
     }
 

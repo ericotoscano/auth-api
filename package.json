@@ -31,6 +31,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.1.1",
     "nodemailer": "^7.0.9",
+    "winston": "^3.18.3",
     "zod": "^3.24.1",
     "zod-validation-error": "^3.4.0"
   },

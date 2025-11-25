@@ -4,7 +4,7 @@ export class CustomError extends Error {
     readonly statusCode: number,
     readonly feedback: string,
     readonly errorCode: string,
-    readonly details: Record<string, string>
+    readonly details: Record<string, string | boolean | Date>
   ) {
     super(message);
 
@@ -23,7 +23,7 @@ export class BadRequestError extends CustomError {
     message: string,
     feedback: string,
     errorCode: string,
-    details: Record<string, string>
+    details: Record<string, string | boolean | Date>
   ) {
     super(message, 400, feedback, errorCode, details);
   }
@@ -34,7 +34,7 @@ export class ConflictError extends CustomError {
     message: string,
     feedback: string,
     errorCode: string,
-    details: Record<string, string>
+    details: Record<string, string | boolean | Date>
   ) {
     super(message, 409, feedback, errorCode, details);
   }
@@ -53,8 +53,13 @@ export class ForbiddenError extends CustomError {
 }
 
 export class NotFoundError extends CustomError {
-  constructor(message: string, feedback: string, errorCode: string) {
-    super(message, 404, feedback, errorCode, {});
+  constructor(
+    message: string,
+    feedback: string,
+    errorCode: string,
+    details: Record<string, string | boolean | Date>
+  ) {
+    super(message, 404, feedback, errorCode, details);
   }
 }
 
