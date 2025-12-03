@@ -15,8 +15,9 @@ export const validateToken =
       if (!tokenToValidate) {
         throw new UnauthorizedError(
           "Missing Token",
-          `No ${type} token was provided.`,
-          `VALIDATE_${type.toUpperCase()}_MISSING`
+          "No token was provided.",
+          "MISSING_TOKEN_ERROR",
+          { type }
         );
       }
 
@@ -40,7 +41,8 @@ export const validateToken =
               throw new UnauthorizedError(
                 "Invalid Access Token",
                 "The access token is no longer valid because the associated user does not exist.",
-                "VALIDATE_ACCESS_USER_UNAUTHORIZED"
+                "USER_ACCESS_TOKEN_ERROR",
+                { user: payload._id }
               );
             }
             throw err;
@@ -59,12 +61,15 @@ export const validateToken =
               tokenToValidate,
               user.refreshToken
             );
+
             if (!isValid) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
+
               throw new UnauthorizedError(
-                "Invalid Refresh Token",
-                "The provided refresh token is invalid or has expired.",
-                "VALIDATE_REFRESH_USER_UNAUTHORIZED"
+                "Invalid Token",
+                "The token is invalid or has expired.",
+                "INVALID_TOKEN_ERROR",
+                { type }
               );
             }
 
@@ -73,10 +78,12 @@ export const validateToken =
           } catch (err) {
             if (err instanceof NotFoundError) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
+
               throw new UnauthorizedError(
                 "Invalid Refresh Token",
                 "The refresh token is no longer valid because the associated user does not exist.",
-                "VALIDATE_REFRESH_USER_NOT_FOUND"
+                "USER_REFRESH_TOKEN_ERROR",
+                { user: payload._id }
               );
             }
             throw err;

@@ -33,29 +33,33 @@ export const checkToken = async (
     if (error instanceof jwt.TokenExpiredError) {
       throw new UnauthorizedError(
         "Expired Token",
-        `The ${type} token has expired. Please request a new one.`,
-        `CHECK_${type.toUpperCase()}_EXPIRED`
+        "The token has expired. Please request a new one.",
+        "EXPIRED_TOKEN_ERROR",
+        { type }
       );
     }
     if (error instanceof jwt.NotBeforeError) {
       throw new UnauthorizedError(
         "Not Active Token",
-        `The ${type} token is not active yet.`,
-        `CHECK_${type.toUpperCase()}_NOT_ACTIVE`
+        "The token is not active yet.",
+        "NOT_ACTIVE_TOKEN_ERROR",
+        { type }
       );
     }
     if (error instanceof jwt.JsonWebTokenError) {
       throw new UnauthorizedError(
         "Invalid Token",
-        `The ${type} token is invalid or has been tampered with.`,
-        `CHECK_${type.toUpperCase()}_INVALID`
+        "The token is invalid or has been tampered with.",
+        "INVALID_TOKEN_ERROR",
+        { type }
       );
     }
 
     throw new InternalServerError(
       "Failed to Checking Token",
-      `An unexpected error occurred while checking the ${type} token.`,
-      `CHECK_${type.toUpperCase()}_INTERNAL`
+      `An unexpected error occurred while checking the token.`,
+      `CHECK_TOKEN_ERROR`,
+      { type }
     );
   }
 };

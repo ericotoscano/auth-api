@@ -26,13 +26,13 @@ import { userEmailSchema } from "../schemas/mail.schemas";
 const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
-
 router.get(
   "/verify/:token",
   validateSchema(jwtSchema, "params"),
   validateToken("verification"),
   verifyUser
 );
+
 router.post(
   "/verify/resend",
   validateSchema(userEmailSchema, "body"),

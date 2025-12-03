@@ -1,5 +1,4 @@
 import winston from "winston";
-import { ENV } from "./env.utils";
 
 const { combine, errors, json, printf, timestamp } = winston.format;
 
@@ -17,7 +16,7 @@ const prettyOrderedJSON = printf((info) => {
 });
 
 export const logger = winston.createLogger({
-  level: ENV.LOG_LEVEL || "info",
+  level: process.env.LOG_LEVEL || "info",
   format: combine(
     errors({ stack: true }),
     timestamp({

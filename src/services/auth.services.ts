@@ -49,9 +49,10 @@ export const verifyUserService = async (
   } catch (error) {
     if (error instanceof NotFoundError) {
       throw new UnauthorizedError(
-        "Invalid Token",
-        "The provided verification token is invalid or the user does not exist.",
-        "VERIFY_TOKEN_INVALID"
+        "Token Verification Failed",
+        "The provided token is invalid or the associated user does not exist.",
+        "TOKEN_VERIFICATION_ERROR",
+        { type: "verification" }
       );
     }
 
@@ -63,7 +64,7 @@ export const verifyUserService = async (
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
       "VERIFICATION_CONFLICT_ERROR",
-      { email: user.email, isVerified: user.isVerified }
+      { isVerified: user.isVerified }
     );
   }
 
@@ -77,7 +78,7 @@ export const verifyUserService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during verification.",
-        "VERIFY_USER_NOT_FOUND",
+        "VERIFY_USER_ERROR",
         {}
       );
     }
@@ -151,7 +152,8 @@ export const resendVerificationEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to resend the verification email. Please try again later.",
-      "RESEND_EMAIL_FAILED"
+      "RESEND_EMAIL_FAILED",
+      {}
     );
   }
 };
@@ -174,7 +176,8 @@ export const loginService = async (
       throw new UnauthorizedError(
         "Invalid Credentials",
         "The provided email or password is incorrect or the user does not exist.",
-        "LOGIN_CREDENTIALS_INVALID"
+        "LOGIN_CREDENTIALS_INVALID",
+        {}
       );
     }
 
@@ -185,7 +188,8 @@ export const loginService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before signing in.",
-      "LOGIN_USER_UNVERIFIED"
+      "LOGIN_USER_UNVERIFIED",
+      {}
     );
   }
 
@@ -195,7 +199,8 @@ export const loginService = async (
     throw new UnauthorizedError(
       "Invalid Credentials",
       "The provided email or password is incorrect.",
-      "LOGIN_CREDENTIALS_INVALID"
+      "LOGIN_CREDENTIALS_INVALID",
+      {}
     );
   }
 
@@ -315,7 +320,8 @@ export const sendResetPasswordEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to send the reset password email. Please try again later.",
-      "SEND_RESET_PASSWORD_EMAIL_FAILED"
+      "SEND_RESET_PASSWORD_EMAIL_FAILED",
+      {}
     );
   }
 };
@@ -333,7 +339,8 @@ export const resetPasswordService = async (
       throw new UnauthorizedError(
         "Invalid Token",
         "The provided reset password token is invalid or the user does not exist.",
-        "RESET_PASSWORD_TOKEN_INVALID"
+        "RESET_PASSWORD_TOKEN_INVALID",
+        {}
       );
     }
 
@@ -344,7 +351,8 @@ export const resetPasswordService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before requesting a password reset.",
-      "RESET_PASSWORD_USER_UNVERIFIED"
+      "RESET_PASSWORD_USER_UNVERIFIED",
+      {}
     );
   }
 

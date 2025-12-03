@@ -6,12 +6,14 @@ import { logger } from "./logger";
 export const connectToDB = async () => {
   try {
     const mongoUri = {
-      test: ENV.DB_CONNECTION_STRING_TEST,
-      development: ENV.DB_CONNECTION_STRING_DEVELOPMENT,
+      test: ENV.TEST_DB_URI,
+      development: ENV.DEV_DB_URI,
     }[ENV.NODE_ENV];
 
     if (!mongoUri)
-      throw new Error(`DB connection URI is not defined for environment: ${ENV.NODE_ENV}`);
+      throw new Error(
+        `DB connection URI is not defined for environment: ${ENV.NODE_ENV}`
+      );
 
     const mongoDB = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
@@ -27,6 +29,21 @@ export const connectToDB = async () => {
     throw error;
   }
 };
+
+export async function disconnectToDB() {
+  await mongoose.disconnect();
+}
+
+export async function clearDatabase() {
+  const collections = mongoose.connection.collections;
+  
+  for (const key in collections) {
+    const coll = collections[key];
+    try {
+      await coll.deleteMany({});
+    } catch (err) {}
+  }
+}
 
 export const runInTransaction = async <T>(
   fn: (session: mongoose.ClientSession) => Promise<T>

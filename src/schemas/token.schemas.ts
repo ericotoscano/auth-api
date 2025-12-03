@@ -12,7 +12,7 @@ export const jwtSchema = z.object({
     .trim()
     .regex(jwtRegex, {
       message:
-        "Invalid token format: must be a valid JWT (three parts separated by dots).",
+        "Invalid token format: must be a valid JWT.",
     }),
 });
 
@@ -25,7 +25,7 @@ export const refreshTokenSchema = z.object({
     .trim()
     .regex(jwtRegex, {
       message:
-        "Invalid token format: must be a valid JWT (three parts separated by dots).",
+        "Invalid token format: must be a valid JWT.",
     }),
 });
 
@@ -37,10 +37,10 @@ export const authorizationSchema = z.object({
     })
     .trim()
     .startsWith("Bearer ", {
-      message: 'Authorization must start with "Bearer "',
+      message: 'Authorization must start with "Bearer".',
     })
     .regex(/^Bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/, {
       message:
-        "Invalid token format: must be a valid Bearer JWT (Bearer <token>).",
+        "Invalid token format: must be a valid Bearer JWT.",
     }),
 });

@@ -55,14 +55,14 @@ export const envSchema = z.object({
     }
   ),
 
-  DB_CONNECTION_STRING_DEVELOPMENT: z.string({
-    required_error: "DB_CONNECTION_STRING_DEVELOPMENT is required",
-    invalid_type_error: "DB_CONNECTION_STRING_DEVELOPMENT must be a string",
+  DEV_DB_URI: z.string({
+    required_error: "DEV_DB_URI is required",
+    invalid_type_error: "DEV_DB_URI must be a string",
   }),
 
-  DB_CONNECTION_STRING_TEST: z.string({
-    required_error: "DB_CONNECTION_STRING_TEST is required",
-    invalid_type_error: "DB_CONNECTION_STRING_TEST must be a string",
+  TEST_DB_URI: z.string({
+    required_error: "TEST_DB_URI is required",
+    invalid_type_error: "TEST_DB_URI must be a string",
   }),
 
   MAIL_HOST: z.string({

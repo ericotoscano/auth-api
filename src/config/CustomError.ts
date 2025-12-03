@@ -41,8 +41,13 @@ export class ConflictError extends CustomError {
 }
 
 export class UnauthorizedError extends CustomError {
-  constructor(message: string, feedback: string, errorCode: string) {
-    super(message, 401, feedback, errorCode, {});
+  constructor(
+    message: string,
+    feedback: string,
+    errorCode: string,
+    details: Record<string, string | boolean | Date>
+  ) {
+    super(message, 401, feedback, errorCode, details);
   }
 }
 
@@ -64,8 +69,13 @@ export class NotFoundError extends CustomError {
 }
 
 export class InternalServerError extends CustomError {
-  constructor(message: string, feedback: string, errorCode: string) {
-    super(message, 500, feedback, errorCode, {});
+  constructor(
+    message: string,
+    feedback: string,
+    errorCode: string,
+    details: Record<string, string | boolean | Date>
+  ) {
+    super(message, 500, feedback, errorCode, details);
   }
 }
 
