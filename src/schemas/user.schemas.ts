@@ -6,7 +6,32 @@ import {
   allowedUsersSortParams,
   AllowedUsersSortParams,
 } from "../types/user/constants.types";
-import { isAllowedParams } from "../utils/params.utils";
+import { signUpBaseSchema } from "./auth.schemas";
+
+export const isAllowedParams = <T extends readonly string[]>(
+  value: string,
+  allowedValues: T
+): value is T[number] => {
+  return allowedValues.includes(value as T[number]);
+};
+
+export const userIdSchema = z.object({
+  userId: z
+    .string({
+      required_error: "userId is required.",
+      invalid_type_error: "userId must be a string.",
+    })
+    .length(24, {
+      message: "Invalid userId length. Must be exactly 24 characters.",
+    })
+    .regex(/^[a-fA-F0-9]{24}$/, {
+      message:
+        "Invalid userId format. Must be a 24 character hexadecimal string.",
+    })
+    .nonempty({ message: "userId cannot be empty." }),
+});
+
+export const userEmailSchema = signUpBaseSchema.pick({ email: true });
 
 export const findAllUsersSchema = z
   .object({

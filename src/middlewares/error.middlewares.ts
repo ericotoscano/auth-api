@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ConflictError, CustomError } from "../config/CustomError";
 import { logger } from "../utils/logger";
-import { formatErrorDetails } from "../utils/error.utils";
+import { filterBody, filterDetails } from "../utils/error.utils";
 
 export const appErrorHandler = (
   err: any,
@@ -9,6 +9,8 @@ export const appErrorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  res.locals.__hasError = true;
+
   const errorResponse =
     err instanceof CustomError
       ? {
@@ -18,7 +20,7 @@ export const appErrorHandler = (
           feedback: err.feedback,
           details:
             err instanceof ConflictError
-              ? formatErrorDetails(err.details)
+              ? filterDetails(err.details)
               : err.details,
         }
       : {
@@ -34,7 +36,16 @@ export const appErrorHandler = (
     errorCode: errorResponse.errorCode || "UNEXPECTED_ERROR",
     details: err.details || {},
     stack: err.stack,
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+    userAgent: req.headers["user-agent"],
+    query: req.query,
+    params: req.params,
+    body: filterBody(req.body),
   });
 
   return res.status(err?.statusCode ?? 500).json(errorResponse);
 };
+
+

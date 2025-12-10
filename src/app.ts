@@ -8,6 +8,7 @@ import userRoutes from "./routes/user.routes";
 
 import { appErrorHandler } from "./middlewares/error.middlewares";
 import { NotFoundError } from "./config/CustomError";
+import { requestLogger } from "./middlewares/request.middlewares";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(requestLogger);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);

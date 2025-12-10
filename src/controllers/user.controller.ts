@@ -12,7 +12,6 @@ import {
 import { UserType } from "../types/user/user.type";
 import { FindUserByIdDTO } from "../dtos/user.dto";
 import { FindAllQueryRequest } from "../types/services.types";
-import { getBaseUrlFromRequest } from "../utils/crud.utils";
 import { AllowedUsersFiltersParams } from "../types/user/constants.types";
 import { DeleteByIdDTO, FindAllDTO, UpdateByIdDTO } from "../dtos/generic.dto";
 import { TypedResponse } from "../types/response.types";
@@ -22,6 +21,7 @@ import {
   UpdateByIdDTOType,
   DeleteByIdDTOType,
 } from "../types/dto.types";
+import { buildBaseUrl } from "../utils/builder.utils";
 
 export const findAllUsers = async (
   req: Request<{}, {}, {}, FindAllQueryRequest<AllowedUsersFiltersParams>>,
@@ -29,7 +29,7 @@ export const findAllUsers = async (
   next: NextFunction
 ) => {
   try {
-    const baseUrl = getBaseUrlFromRequest(req);
+    const baseUrl = buildBaseUrl(req);
 
     const { documents, pagination } = await findAllUsersService(
       req.query,

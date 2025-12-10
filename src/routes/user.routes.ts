@@ -6,11 +6,10 @@ import {
   findUserById,
   updateUserById,
 } from "../controllers/user.controller";
-import { findAllUsersSchema, updateUserSchema } from "../schemas/user.schemas";
+import { findAllUsersSchema, updateUserSchema, userIdSchema } from "../schemas/user.schemas";
 import { validateToken } from "../middlewares/auth.middlewares";
 import { authorizationSchema } from "../schemas/token.schemas";
 import { validateUserSelfPermission } from "../middlewares/user.middlewares";
-import { userIdSchema } from "../schemas/id.schema";
 
 const router = Router();
 

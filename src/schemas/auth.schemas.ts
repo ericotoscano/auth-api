@@ -64,13 +64,18 @@ export const signUpSchema = signUpBaseSchema.refine(
 
 export const loginSchema = z
   .object({
-    identifier: z.string().min(1),
+    identifier: z
+      .string({
+        required_error: "Identifier is required.",
+        invalid_type_error: "Identifier must be a string.",
+      })
+      .min(3, { message: "Identifier must be at least 3 characters long." }),
     password: signUpBaseSchema.shape.password,
   })
   .superRefine((data, ctx) => {
     const isEmail = /\S+@\S+\.\S+/.test(data.identifier);
 
-    if (!isEmail && data.identifier.length < 3) {
+    if (!isEmail && data.identifier.length > 8) {
       ctx.addIssue({
         path: ["identifier"],
         code: z.ZodIssueCode.custom,

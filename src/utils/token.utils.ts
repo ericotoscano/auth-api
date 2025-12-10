@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { UnauthorizedError, InternalServerError } from "../config/CustomError";
 import { ENV } from "./env.utils";
 import { TokenTypes, TokenPayload } from "../types/token.types";
+import { TokenOptions } from "../types/services.types";
 
 const tokenSecrets: Record<TokenTypes, string> = {
   verification: ENV.VERIFICATION_TOKEN_SECRET_KEY,
@@ -20,6 +21,19 @@ export const getTokenFromRequest: Record<
   access: (req) => req.headers.authorization?.replace("Bearer ", ""),
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],
 } as const;
+
+export const createToken = (
+  payload: TokenPayload,
+  options: TokenOptions
+): string => {
+  const { secret, expiresInMinutes, audience, issuer } = options;
+
+  return jwt.sign(payload, secret, {
+    expiresIn: expiresInMinutes * 60,
+    audience,
+    issuer,
+  });
+};
 
 export const checkToken = async (
   type: TokenTypes,

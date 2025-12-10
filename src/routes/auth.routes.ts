@@ -21,25 +21,26 @@ import {
   authorizationSchema,
   refreshTokenSchema,
 } from "../schemas/token.schemas";
-import { userEmailSchema } from "../schemas/mail.schemas";
+import { userEmailSchema } from "../schemas/user.schemas";
 
 const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
+
 router.get(
   "/verify/:token",
   validateSchema(jwtSchema, "params"),
   validateToken("verification"),
   verifyUser
 );
-
 router.post(
   "/verify/resend",
   validateSchema(userEmailSchema, "body"),
   resendVerificationEmail
 );
-
+//continuar arrumando os logs daqui
 router.post("/login", validateSchema(loginSchema, "body"), login);
+
 router.delete(
   "/logout",
   validateSchema(authorizationSchema, "headers"),

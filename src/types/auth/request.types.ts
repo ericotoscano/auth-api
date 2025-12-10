@@ -1,22 +1,18 @@
-export type SignUpRequestBody = {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  password: string;
-  confirm: string;
-};
+import z from "zod";
+import {
+  loginSchema,
+  resetPasswordSchema,
+  signUpSchema,
+} from "../../schemas/auth.schemas";
+import { userEmailSchema } from "../../schemas/user.schemas";
+import { jwtSchema } from "../../schemas/token.schemas";
 
-export type LoginRequestBody = {
-  identifier: string;
-  password: string;
-};
+export type SignUpRequestBody = z.infer<typeof signUpSchema>;
 
-export type ResetPasswordRequestBody = Pick<
-  SignUpRequestBody,
-  "password" | "confirm"
->;
+export type LoginRequestBody = z.infer<typeof loginSchema>;
 
-export type EmailRequestBody = Pick<SignUpRequestBody, "email">;
+export type ResetPasswordRequestBody = z.infer<typeof resetPasswordSchema>;
 
-export type JWTRequestParams = { token: string };
+export type EmailRequestBody = z.infer<typeof userEmailSchema>;
+
+export type JWTRequestParams = z.infer<typeof jwtSchema>;

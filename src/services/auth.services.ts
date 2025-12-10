@@ -4,7 +4,6 @@ import {
   findUserService,
   updateUserByIdService,
 } from "./user.services";
-import { createToken } from "../utils/auth.utils";
 import { sendEmailService } from "./mail.services";
 import {
   ConflictError,
@@ -24,6 +23,7 @@ import {
 } from "../types/token.types";
 import { SignUpServiceReturn } from "../types/user/services.types";
 import { SignUpRequestBody } from "../types/auth/request.types";
+import { createToken } from "../utils/token.utils";
 
 export const signUpService = async (
   signUpBody: SignUpRequestBody
@@ -101,7 +101,7 @@ export const resendVerificationEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The provided email is incorrect or the user does not exist.",
-        "RESEND_EMAIL_USER_NOT_FOUND",
+        "USER_NOT_FOUND_ERROR",
         {}
       );
     }
@@ -114,7 +114,7 @@ export const resendVerificationEmailService = async (
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
       "VERIFICATION_CONFLICT_ERROR",
-      { email: user.email, isVerified: user.isVerified }
+      { isVerified: user.isVerified }
     );
   }
 
@@ -135,7 +135,7 @@ export const resendVerificationEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during resend verification email.",
-        "RESEND_EMAIL_USER_NOT_FOUND",
+        "USER_NOT_FOUND_ERROR",
         {}
       );
     }
@@ -152,7 +152,7 @@ export const resendVerificationEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to resend the verification email. Please try again later.",
-      "RESEND_EMAIL_FAILED",
+      "RESEND_EMAIL_ERROR",
       {}
     );
   }
@@ -176,7 +176,7 @@ export const loginService = async (
       throw new UnauthorizedError(
         "Invalid Credentials",
         "The provided email or password is incorrect or the user does not exist.",
-        "LOGIN_CREDENTIALS_INVALID",
+        "CREDENTIALS_ERROR",
         {}
       );
     }
@@ -188,8 +188,8 @@ export const loginService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before signing in.",
-      "LOGIN_USER_UNVERIFIED",
-      {}
+      "USER_VERIFIED_ERROR",
+      { isVerified: user.isVerified }
     );
   }
 
@@ -198,8 +198,8 @@ export const loginService = async (
   if (!isPasswordValid) {
     throw new UnauthorizedError(
       "Invalid Credentials",
-      "The provided email or password is incorrect.",
-      "LOGIN_CREDENTIALS_INVALID",
+      "The provided email or password is incorrect or the user does not exist.",
+      "CREDENTIALS_ERROR",
       {}
     );
   }
@@ -223,7 +223,7 @@ export const loginService = async (
       issuer: "urn:system:token-issuer:type:refresh",
     }
   );
-
+  //continuar daqui revendo os erros etc
   try {
     updatedUser = await updateUserByIdService(user._id, {
       set: { refreshToken, lastLogin: new Date().toISOString() },
