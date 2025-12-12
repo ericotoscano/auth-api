@@ -1,46 +1,15 @@
-export const filterDetails = (
-  details: Record<string, any>
+export const filterInfo = (
+  info: Record<string, any>,
+  sensitiveKeys: string[]
 ): Record<string, any> => {
-  if (!details || typeof details !== "object") {
-    return {};
-  }
+  if (!info || typeof info !== "object") return {};
 
-  const SENSITIVE_ = [
-    "password",
-    "confirm",
-    "token",
-    "secret",
-    "key",
-    "authorization",
-  ];
+  const out: Record<string, any> = { ...info };
 
-  const out: Record<string, boolean> = {};
-
-  for (const key of Object.keys(details)) {
-    out[key] = "***REDACTED***";
-  }
-
-  return out;
-};
-
-export const filterBody = (body: any): Record<string, any> => {
-  if (!body || typeof body !== "object") return body;
-
-  const SENSITIVE_KEYS = [
-    "password",
-    "confirm",
-    "token",
-    "secret",
-    "key",
-    "authorization",
-  ];
-
-  const out: Record<string, any> = { ...body };
-
-  for (const key of Object.keys(out)) {
+  for (const key of Object.keys(info)) {
     const lowerKey = key.toLowerCase();
 
-    if (SENSITIVE_KEYS.some((sensitive) => lowerKey.includes(sensitive))) {
+    if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
       out[key] = "***REDACTED***";
     }
   }

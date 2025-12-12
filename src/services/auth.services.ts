@@ -223,7 +223,7 @@ export const loginService = async (
       issuer: "urn:system:token-issuer:type:refresh",
     }
   );
-  //continuar daqui revendo os erros etc
+
   try {
     updatedUser = await updateUserByIdService(user._id, {
       set: { refreshToken, lastLogin: new Date().toISOString() },
@@ -233,8 +233,8 @@ export const loginService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during login.",
-        "LOGIN_USER_NOT_FOUND",
-        {}
+        "USER_NOT_FOUND_ERROR",
+        { userId: user._id }
       );
     }
 
@@ -248,17 +248,16 @@ export const loginService = async (
 
 export const logoutService = async (user: UserType): Promise<void> => {
   const { _id } = user;
-  let updatedUser: UserType;
 
   try {
-    updatedUser = await updateUserByIdService(_id, { unset: ["refreshToken"] });
+    await updateUserByIdService(_id, { unset: ["refreshToken"] });
   } catch (error) {
     if (error instanceof NotFoundError) {
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during logout.",
-        "LOGOUT_USER_NOT_FOUND",
-        {}
+        "USER_NOT_FOUND_ERROR",
+        { userId: _id }
       );
     }
 
@@ -278,7 +277,7 @@ export const sendResetPasswordEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The provided email is incorrect or the user does not exist.",
-        "SEND_RESET_PASSWORD_USER_NOT_FOUND",
+        "USER_NOT_FOUND_ERROR",
         {}
       );
     }
@@ -303,8 +302,8 @@ export const sendResetPasswordEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during send reset password email.",
-        "SEND_RESET_PASSWORD_USER_NOT_FOUND",
-        {}
+        "USER_NOT_FOUND_ERROR",
+        { userId: user._id }
       );
     }
 
@@ -320,7 +319,7 @@ export const sendResetPasswordEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to send the reset password email. Please try again later.",
-      "SEND_RESET_PASSWORD_EMAIL_FAILED",
+      "RESET_PASSWORD_EMAIL_ERROR",
       {}
     );
   }
@@ -339,8 +338,8 @@ export const resetPasswordService = async (
       throw new UnauthorizedError(
         "Invalid Token",
         "The provided reset password token is invalid or the user does not exist.",
-        "RESET_PASSWORD_TOKEN_INVALID",
-        {}
+        "RESET_PASSWORD_TOKEN_ERROR",
+        { type: "reset-password" }
       );
     }
 
@@ -351,8 +350,8 @@ export const resetPasswordService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before requesting a password reset.",
-      "RESET_PASSWORD_USER_UNVERIFIED",
-      {}
+      "USER_VERIFIED_ERROR",
+      { isVerified: user.isVerified }
     );
   }
 
@@ -366,8 +365,8 @@ export const resetPasswordService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during reset password.",
-        "RESET_PASSWORD_USER_NOT_FOUND",
-        {}
+        "USER_NOT_FOUND_ERROR",
+        { userId: user._id }
       );
     }
 
@@ -408,8 +407,8 @@ export const refreshUserAccessTokenService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during refresh access token.",
-        "REFRESH_ACCESS_TOKEN_USER_NOT_FOUND",
-        {}
+        "USER_NOT_FOUND_ERROR",
+        { userId: user._id }
       );
     }
 

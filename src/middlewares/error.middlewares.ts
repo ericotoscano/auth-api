@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ConflictError, CustomError } from "../config/CustomError";
 import { logger } from "../utils/logger";
-import { filterBody, filterDetails } from "../utils/error.utils";
+import { filterInfo } from "../utils/error.utils";
 
 export const appErrorHandler = (
   err: any,
@@ -20,7 +20,7 @@ export const appErrorHandler = (
           feedback: err.feedback,
           details:
             err instanceof ConflictError
-              ? filterDetails(err.details)
+              ? filterInfo(err.details, ["username", "email"])
               : err.details,
         }
       : {
@@ -42,10 +42,8 @@ export const appErrorHandler = (
     userAgent: req.headers["user-agent"],
     query: req.query,
     params: req.params,
-    body: filterBody(req.body),
+    body: filterInfo(req.body, ["password", "confirm"]),
   });
 
   return res.status(err?.statusCode ?? 500).json(errorResponse);
 };
-
-
