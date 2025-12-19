@@ -1,14 +1,15 @@
 import { mongoose } from "../utils/db.utils";
 import User from "../models/user.model";
 import {
-  FindUserFilters,
-  UserUpdateFields,
+  FindAllUsersReturn,
+  FindAllUsersQueryRequest,
+  FindUserFilter,
+  UpdateUserOptions,
 } from "../types/user/services.types";
-import { FindAllQueryRequest, UpdateOptions } from "../types/services.types";
-import { AllowedUsersFiltersParams } from "../types/user/constants.types";
 import {
   BadRequestError,
   ConflictError,
+  CustomError,
   InternalServerError,
   NotFoundError,
 } from "../config/CustomError";
@@ -16,14 +17,13 @@ import { UserType } from "../types/user/user.type";
 import { ENV } from "../utils/env.utils";
 import { SignUpRequestBody } from "../types/auth/request.types";
 import {
-  buildAllowedFields,
-  buildAllowedFilters,
-  buildAllowedSort,
+  buildQueryFields,
+  buildQueryFilters,
+  buildQuerySort,
   buildPagination,
   buildUpdateQuery,
-} from "../utils/builder.utils";
+} from "../utils/builders.utils";
 import { createToken } from "../utils/token.utils";
-import { FilterQuery } from "mongoose";
 
 export const createUserService = async (
   signUpBody: SignUpRequestBody
@@ -74,24 +74,26 @@ export const createUserService = async (
 };
 
 export const findAllUsersService = async (
-  queryRequest: FindAllQueryRequest<AllowedUsersFiltersParams>,
+  query: FindAllUsersQueryRequest,
   baseUrl: string
-) => {
-  const { fields, sort, limit = 10, offset = 0, ...rest } = queryRequest;
+): Promise<FindAllUsersReturn> => {
+  const { fields, sort, limit = 10, offset = 0, ...rest } = query;
 
   try {
-    const queryFilters = buildAllowedFilters(rest) as FilterQuery<UserType>;
+    const queryFilters = buildQueryFilters(rest);
 
-    const queryFields = buildAllowedFields(fields);
+    const queryFields = buildQueryFields(fields);
 
     const sortArray = Array.isArray(sort) ? sort : sort ? [sort] : [];
 
-    const querySort = buildAllowedSort(sortArray);
+    const querySort = buildQuerySort(sortArray);
 
     const documents = await User.find(queryFilters, queryFields)
       .sort(querySort)
       .skip(offset)
       .limit(limit);
+
+    const results = documents.map((doc) => doc.toObject());
 
     const total = await User.countDocuments(queryFilters);
 
@@ -100,25 +102,20 @@ export const findAllUsersService = async (
       total,
       limit,
       offset,
-      queryRequest
+      query
     );
 
     return {
-      documents,
+      results,
       pagination: { total, limit, offset, nextUrl, previousUrl },
     };
   } catch (error: unknown) {
-    if (error instanceof mongoose.Error.ValidationError) {
-      throw new BadRequestError(
-        "Invalid Users Query",
-        "One or more query parameters are invalid or not allowed for users.",
-        "USERS_QUERY_ERROR",
-        {}
-      );
+    if (error instanceof CustomError) {
+      throw error;
     }
 
     throw new InternalServerError(
-      "Failed to Retrieve Users",
+      "Failed to Find Users",
       "An unexpected error occurred while loading users from the database. Please try again later.",
       "FIND_USERS_DB_ERROR",
       {}
@@ -127,14 +124,14 @@ export const findAllUsersService = async (
 };
 
 export const findUserService = async (
-  filter: FindUserFilters,
+  filter: FindUserFilter,
   selectFields?: string
 ) => {
   try {
     const document = selectFields
       ? await User.findOne(filter, selectFields)
       : await User.findOne(filter);
-
+    //arrumar aqui o filter para nao expor dados sensiveis
     if (!document) {
       throw new NotFoundError(
         "User Not Found",
@@ -159,12 +156,12 @@ export const findUserService = async (
 
 export const updateUserByIdService = async (
   id: string,
-  options: UpdateOptions<UserUpdateFields>,
+  options: UpdateUserOptions,
   session?: mongoose.ClientSession
 ) => {
-  const updateQuery = buildUpdateQuery(options);
-
   try {
+    const updateQuery = buildUpdateQuery(options);
+
     const updatedDocument = await User.findByIdAndUpdate(id, updateQuery, {
       new: true,
       session,
@@ -181,7 +178,8 @@ export const updateUserByIdService = async (
 
     return updatedDocument.toObject() as UserType;
   } catch (error) {
-    if (error instanceof NotFoundError) throw error;
+    if (error instanceof NotFoundError || error instanceof BadRequestError)
+      throw error;
 
     if (
       error instanceof mongoose.mongo.MongoServerError &&

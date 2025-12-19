@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
+import { filterInfo } from "../utils/info.utils";
 
 export const requestLogger = (
   req: Request,
@@ -13,7 +14,7 @@ export const requestLogger = (
   res.on("finish", () => {
     const duration = Date.now() - start;
 
-    if( res.locals.__hasError ) return;
+    if (res.locals.__hasError) return;
 
     logger.info("HTTP Request", {
       method: req.method,
@@ -24,7 +25,9 @@ export const requestLogger = (
       userAgent: req.headers["user-agent"],
       query: req.query,
       params: req.params,
+      body: filterInfo(req.body, ["identifier", "password"]),
       contentLength: res.getHeader("content-length"),
+      timestamp: new Date().toISOString(),
     });
   });
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ConflictError, CustomError } from "../config/CustomError";
 import { logger } from "../utils/logger";
-import { filterInfo } from "../utils/error.utils";
+import { filterInfo } from "../utils/info.utils";
 
 export const appErrorHandler = (
   err: any,

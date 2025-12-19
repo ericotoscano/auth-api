@@ -1,43 +1,57 @@
 import { PaginationType } from "./pagination.types";
-import { UserType } from "./user/user.type";
 
-export type FindAllDTOType<T extends Record<string, any>> = {
+export type SignedUpUserDTOType = {
+  id: string;
+  isVerified: boolean;
+  createdAt: string;
+};
+
+export type VerifiedUserDTOType = {
+  id: string;
+  isVerified: boolean;
+  updatedAt: string;
+};
+
+export type LoggedInUserDTOType = {
+  id: string;
+  accessToken: string;
+  lastLogin: string;
+  updatedAt: string;
+};
+
+export type FindAllUsersDTOType = {
   pagination: PaginationType;
-  results: Partial<T>[];
+  results: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    createdAt: string;
+  }[];
 };
-export type UpdateByIdDTOType<T> = Partial<T> & { readonly updatedAt: string };
 
-export type DeleteByIdDTOType<T extends { _id: string }> = Pick<T, "_id"> & {
-  readonly deletedAt: string;
+export type FindUserByIdDTOType = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  isVerified: boolean;
+  createdAt: string;
 };
 
-export type SignedUpUserDTOType = Pick<
-  UserType,
-  "_id" | "isVerified" | "createdAt"
->;
+export type UpdateUserByIdDTOType = {
+  id: string;
+  updatedFields: string[];
+  updatedAt: string;
+};
 
-export type VerifiedUserDTOType = Pick<
-  UserType,
-  "_id" | "isVerified" | "updatedAt"
->;
+export type DeleteUserByIdDTOType = {
+  id: string;
+  deletedAt: string;
+};
 
-export type LoggedInUserDTOType = Pick<
-  UserType,
-  "_id" | "lastLogin" | "updatedAt"
-> & { accessToken: string };
-
-export type RefreshedUserAccessTokenDTOType = Pick<
-  UserType,
-  "_id" | "updatedAt"
-> & { accessToken: string };
-
-export type FindUserByIdDTOType = Omit<
-  UserType,
-  | "email"
-  | "password"
-  | "resetPasswordToken"
-  | "verificationToken"
-  | "refreshToken"
-  | "lastLogin"
-  | "updatedAt"
->;
+export type RefreshedUserAccessTokenDTOType = {
+  id: string;
+  accessToken: string;
+  updatedAt: string;
+};

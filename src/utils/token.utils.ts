@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { UnauthorizedError, InternalServerError } from "../config/CustomError";
 import { ENV } from "./env.utils";
 import { TokenTypes, TokenPayload } from "../types/token.types";
-import { TokenOptions } from "../types/services.types";
+import { TokenOptions } from "../types/user/services.types";
 
 const tokenSecrets: Record<TokenTypes, string> = {
   verification: ENV.VERIFICATION_TOKEN_SECRET_KEY,

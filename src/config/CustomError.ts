@@ -52,8 +52,13 @@ export class UnauthorizedError extends CustomError {
 }
 
 export class ForbiddenError extends CustomError {
-  constructor(message: string, feedback: string, errorCode: string) {
-    super(message, 403, feedback, errorCode, {});
+  constructor(
+    message: string,
+    feedback: string,
+    errorCode: string,
+    details: Record<string, string | boolean | Date>
+  ) {
+    super(message, 403, feedback, errorCode, details);
   }
 }
 
@@ -80,7 +85,12 @@ export class InternalServerError extends CustomError {
 }
 
 export class ExternalServiceError extends CustomError {
-  constructor(message: string, feedback: string, errorCode: string) {
-    super(message, 502, feedback, errorCode, {});
+  constructor(
+    message: string,
+    feedback: string,
+    errorCode: string,
+    details: Record<string, string | boolean | Date>
+  ) {
+    super(message, 502, feedback, errorCode, details);
   }
 }

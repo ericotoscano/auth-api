@@ -128,10 +128,10 @@ export const envSchema = z.object({
     .refine(
       (s) => {
         const n = parseInt(s);
-        return n > 0 && n <= 10;
+        return n > 0 && n <= 30;
       },
       {
-        message: "ACCESS_TOKEN_DURATION_MINUTES must be between 1 and 5",
+        message: "ACCESS_TOKEN_DURATION_MINUTES must be between 1 and 30",
       }
     ),
 

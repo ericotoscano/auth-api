@@ -16,19 +16,19 @@ export const isAllowedParams = <T extends readonly string[]>(
 };
 
 export const userIdSchema = z.object({
-  userId: z
+  id: z
     .string({
-      required_error: "userId is required.",
-      invalid_type_error: "userId must be a string.",
+      required_error: "The user id is required.",
+      invalid_type_error: "The user id must be a string.",
     })
     .length(24, {
-      message: "Invalid userId length. Must be exactly 24 characters.",
+      message: "Invalid user id length. Must be exactly 24 characters.",
     })
     .regex(/^[a-fA-F0-9]{24}$/, {
       message:
-        "Invalid userId format. Must be a 24 character hexadecimal string.",
+        "Invalid user id format. Must be a 24 character hexadecimal string.",
     })
-    .nonempty({ message: "userId cannot be empty." }),
+    .nonempty({ message: "The user id cannot be empty." }),
 });
 
 export const userEmailSchema = signUpBaseSchema.pick({ email: true });
@@ -48,6 +48,7 @@ export const findAllUsersSchema = z
         (data) => {
           if (!data) return true;
           const fieldsParams = data.split(",");
+          
           return fieldsParams.every((field) =>
             isAllowedParams(field, allowedUsersFieldsParams)
           );
@@ -92,36 +93,36 @@ export const findAllUsersSchema = z
     limit: z.coerce.number().int().positive().optional(),
     offset: z.coerce.number().int().nonnegative().optional(),
 
-    firstName: z
+    first_name: z
       .string({
-        invalid_type_error: '"firstName" query parameter must be a string.',
+        invalid_type_error: '"first_name" query parameter must be a string.',
       })
       .optional()
       .transform((data) => (data?.trim() === "" ? undefined : data)),
 
-    lastName: z
+    last_name: z
       .string({
-        invalid_type_error: '"lastName" query parameter must be a string.',
+        invalid_type_error: '"last_name" query parameter must be a string.',
       })
       .optional(),
 
-    createdAt: z
+    created_at: z
       .string({
-        invalid_type_error: '"createdAt" query parameter must be a string.',
+        invalid_type_error: '"created_at" query parameter must be a string.',
       })
       .optional()
       .refine((data) => data === undefined || !isNaN(Date.parse(data)), {
-        message: '"createdAt" must be a valid ISO date string.',
+        message: '"created_at" must be a valid ISO date string.',
       })
       .transform((data) => (data ? new Date(data) : undefined)),
 
-    updatedAt: z
+    updated_at: z
       .string({
-        invalid_type_error: '"updatedAt" query parameter must be a string.',
+        invalid_type_error: '"updated_at" query parameter must be a string.',
       })
       .optional()
       .refine((data) => data === undefined || !isNaN(Date.parse(data)), {
-        message: '"updatedAt" must be a valid ISO date string.',
+        message: '"updated_at" must be a valid ISO date string.',
       })
       .transform((data) => (data ? new Date(data) : undefined)),
   })

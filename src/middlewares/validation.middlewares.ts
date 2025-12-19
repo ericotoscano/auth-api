@@ -25,12 +25,15 @@ export const validateSchema =
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const path = error.issues.map((issue) => issue.path);
-        const feedback = error.issues.map((issue) => issue.message);
+        const details: Record<string, string> = {};
 
-        const details = Object.fromEntries(
-          feedback.map((message, index) => [path[index].join("."), message])
-        );
+        for (const issue of error.issues) {
+          const field = issue.path.join(".") || requestSection;
+
+          if (!details[field]) {
+            details[field] = issue.message;
+          }
+        }
 
         return next(
           new BadRequestError(

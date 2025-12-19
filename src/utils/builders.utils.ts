@@ -1,23 +1,49 @@
 import { Request } from "express";
 import { SortOrder } from "mongoose";
 import { BadRequestError } from "../config/CustomError";
-import { UpdateOptions } from "../types/services.types";
+import { UpdateUserOptions } from "../types/user/services.types";
 import {
   allowedUsersFieldsParams,
   AllowedUsersFieldsParams,
   AllowedUsersFiltersParams,
   allowedUsersFiltersParams,
+  AllowedUsersQueryFields,
+  AllowedUsersQueryFilters,
+  AllowedUsersQuerySort,
   AllowedUsersSortParams,
   allowedUsersSortParams,
 } from "../types/user/constants.types";
+import { ENV } from "./env.utils";
 
-export const buildBaseUrl = <Q>(req: Request<{}, {}, {}, Q>): string => {
-  return `${req.protocol}://${req.get("host")}${req.baseUrl}${req.path}`;
+const escapeRegex = (string: string): string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-export const buildAllowedFilters = (
+const queryMap: Record<
+  AllowedUsersFiltersParams | AllowedUsersFieldsParams | AllowedUsersSortParams,
+  AllowedUsersQueryFilters | AllowedUsersQueryFields | AllowedUsersQuerySort
+> = {
+  first_name: "firstName",
+  "-first_name": "-firstName",
+  last_name: "lastName",
+  "-last_name": "-lastName",
+  username: "username",
+  "-username": "-username",
+  created_at: "createdAt",
+  "-created_at": "-createdAt",
+  updated_at: "updatedAt",
+  "-updated_at": "-updatedAt",
+};
+
+export const buildBaseUrl = <Q>(req: Request<{}, {}, {}, Q>): string => {
+  return `${req.protocol}://${req.get("host") || `localhost:${ENV.API_PORT}`}${
+    req.baseUrl
+  }${req.path}`;
+};
+
+export const buildQueryFilters = (
   filter: Record<string, any>
-): Partial<Record<AllowedUsersFiltersParams, any>> => {
+): Partial<Record<AllowedUsersQueryFilters, any>> => {
   return Object.entries(filter).reduce((acc, [key, value]) => {
     if (
       allowedUsersFiltersParams.includes(key as AllowedUsersFiltersParams) &&
@@ -25,43 +51,36 @@ export const buildAllowedFilters = (
       value !== null &&
       value !== ""
     ) {
-      acc[key as AllowedUsersFiltersParams] = value;
+      const mappedKey = queryMap[key as AllowedUsersFiltersParams];
+
+      acc[mappedKey as AllowedUsersQueryFilters] = new RegExp(
+        `^${escapeRegex(value)}$`,
+        "i"
+      );
     }
 
     return acc;
-  }, {} as Partial<Record<AllowedUsersFiltersParams, any>>);
+  }, {} as Partial<Record<AllowedUsersQueryFilters, any>>);
 };
 
-export const buildAllowedFields = (
+export const buildQueryFields = (
   fields?: (string | number | symbol)[]
-): Partial<Record<AllowedUsersFieldsParams | "_id", 1>> => {
-  if (!fields || fields.length === 0) {
-    return allowedUsersFieldsParams.reduce(
-      (acc, field) => {
-        acc[field] = 1;
-        return acc;
-      },
-      { _id: 1 } as Partial<Record<AllowedUsersFieldsParams | "_id", 1>>
-    );
-  }
+): Partial<Record<AllowedUsersQueryFields, 1>> => {
+  if (!fields || fields.length === 0) return {};
 
-  return fields.reduce(
-    (acc, field) => {
-      if (
-        field &&
-        allowedUsersFieldsParams.includes(field as AllowedUsersFieldsParams)
-      ) {
-        acc[field as AllowedUsersFieldsParams] = 1;
-      }
+  return fields.reduce((acc, field) => {
+    if (allowedUsersFieldsParams.includes(field as AllowedUsersFieldsParams)) {
+      const mappedKey = queryMap[field as AllowedUsersFieldsParams];
 
-      return acc;
-    },
-    { _id: 1 } as Partial<Record<AllowedUsersFieldsParams | "_id", 1>>
-  );
+      acc[mappedKey as AllowedUsersQueryFields] = 1;
+    }
+
+    return acc;
+  }, {} as Partial<Record<AllowedUsersQueryFields, 1>>);
 };
 
-export const buildAllowedSort = (
-  sortParams?: readonly string[]
+export const buildQuerySort = (
+  sortParams?: string[]
 ): [string, SortOrder][] => {
   if (!sortParams || sortParams.length === 0) return [];
 
@@ -80,7 +99,9 @@ export const buildAllowedSort = (
     }
 
     if (allowedUsersSortParams.includes(field as AllowedUsersSortParams)) {
-      acc.push([field, order]);
+      const mappedKey = queryMap[field as AllowedUsersSortParams];
+
+      acc.push([mappedKey, order]);
     }
 
     return acc;
@@ -112,8 +133,8 @@ export const buildPagination = (
   return { nextUrl, previousUrl };
 };
 
-export const buildUpdateQuery = <T extends Record<string, any>>(
-  options: UpdateOptions<T>
+export const buildUpdateQuery = (
+  options: UpdateUserOptions
 ): Record<string, any> => {
   const updateQuery: Record<string, any> = {};
 
@@ -129,22 +150,10 @@ export const buildUpdateQuery = <T extends Record<string, any>>(
     }, {} as Record<string, string>);
   }
 
-  if (options.push && Object.keys(options.push).length > 0) {
-    updateQuery.$push = options.push;
-  }
-
-  if (options.pull && Object.keys(options.pull).length > 0) {
-    updateQuery.$pull = options.pull;
-  }
-
-  if (options.addToSet && Object.keys(options.addToSet).length > 0) {
-    updateQuery.$addToSet = options.addToSet;
-  }
-
   if (Object.keys(updateQuery).length === 0) {
     throw new BadRequestError(
       "No Provided Fields to Update",
-      "You must provide at least one field to update, remove or push.",
+      "You must provide at least one field to update or remove.",
       "FIELDS_UPDATE_ERROR",
       {}
     );

@@ -22,7 +22,7 @@ router.get(
 );
 
 router
-  .route("/:userId")
+  .route("/:id")
   .all(
     validateSchema(authorizationSchema, "headers"),
     validateToken("access"),

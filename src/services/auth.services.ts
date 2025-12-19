@@ -21,9 +21,9 @@ import {
   ResetPasswordTokenPayload,
   VerificationTokenPayload,
 } from "../types/token.types";
-import { SignUpServiceReturn } from "../types/user/services.types";
 import { SignUpRequestBody } from "../types/auth/request.types";
 import { createToken } from "../utils/token.utils";
+import { SignUpServiceReturn } from "../types/user/services.types";
 
 export const signUpService = async (
   signUpBody: SignUpRequestBody
