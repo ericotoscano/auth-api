@@ -1,7 +1,7 @@
 import { PaginationType } from "./pagination.types";
 
 export type SignedUpUserDTOType = {
-  id: string;
+  userId: string;
   isVerified: boolean;
   createdAt: string;
 };

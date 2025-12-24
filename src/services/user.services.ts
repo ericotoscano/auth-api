@@ -60,7 +60,7 @@ export const createUserService = async (
         "User Creation Conflict",
         "This username or email is already in use.",
         "USER_CONFLICT_ERROR",
-        error.keyValue
+        {}
       );
     }
 

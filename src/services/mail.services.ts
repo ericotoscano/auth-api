@@ -15,10 +15,6 @@ export const sendEmailService = async (
 
     const info = await transporter.sendMail(mailOptions);
 
-    logger.info(`${type.charAt(0).toUpperCase() + type.slice(1)} email sent`, {
-      details: { messageId: info.messageId },
-    });
-
     return true;
   } catch (error: any) {
     logger.error(`Failed to send ${type} email`, {

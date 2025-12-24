@@ -9,7 +9,7 @@ import { UserType } from "../types/user/user.type";
 export class SignedUpUserDTO {
   static toJSON(user: UserType): SignedUpUserDTOType {
     return {
-      id: user._id,
+      userId: user._id,
       isVerified: user.isVerified,
       createdAt: user.createdAt,
     };

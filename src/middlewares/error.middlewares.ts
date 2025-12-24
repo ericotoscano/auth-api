@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { ConflictError, CustomError } from "../config/CustomError";
+import { CustomError } from "../config/CustomError";
 import { logger } from "../utils/logger";
-import { filterInfo } from "../utils/info.utils";
+import { filterInfo, filterPath } from "../utils/filter.utils";
 
 export const appErrorHandler = (
   err: any,
@@ -18,10 +18,7 @@ export const appErrorHandler = (
           message: err.message,
           errorCode: err.errorCode,
           feedback: err.feedback,
-          details:
-            err instanceof ConflictError
-              ? filterInfo(err.details, ["username", "email"])
-              : err.details,
+          details: err.details,
         }
       : {
           success: false,
@@ -37,12 +34,20 @@ export const appErrorHandler = (
     details: err.details || {},
     stack: err.stack,
     method: req.method,
-    path: req.originalUrl,
+    path: filterPath(req.originalUrl),
     ip: req.ip,
     userAgent: req.headers["user-agent"],
     query: req.query,
     params: req.params,
-    body: filterInfo(req.body, ["password", "confirm"]),
+    body: filterInfo(req.body, [
+      "identifier",
+      "password",
+      "confirm",
+      "email",
+      "username",
+      "firstname",
+      "lastname",
+    ]),
   });
 
   return res.status(err?.statusCode ?? 500).json(errorResponse);

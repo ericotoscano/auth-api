@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
-import { filterInfo } from "../utils/info.utils";
+import { filterInfo, filterPath } from "../utils/filter.utils";
 
 export const requestLogger = (
   req: Request,
@@ -18,14 +18,22 @@ export const requestLogger = (
 
     logger.info("HTTP Request", {
       method: req.method,
-      path: req.originalUrl,
+      path: filterPath(req.originalUrl),
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       ip: req.ip,
       userAgent: req.headers["user-agent"],
       query: req.query,
       params: req.params,
-      body: filterInfo(req.body, ["identifier", "password"]),
+      body: filterInfo(req.body, [
+        "identifier",
+        "password",
+        "confirm",
+        "email",
+        "username",
+        "firstname",
+        "lastname",
+      ]),
       contentLength: res.getHeader("content-length"),
       timestamp: new Date().toISOString(),
     });

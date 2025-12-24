@@ -33,12 +33,13 @@ router.get(
   validateToken("verification"),
   verifyUser
 );
+
 router.post(
   "/verify/resend",
   validateSchema(userEmailSchema, "body"),
   resendVerificationEmail
 );
-//continuar arrumando os logs daqui
+
 router.post("/login", validateSchema(loginSchema, "body"), login);
 
 router.delete(
