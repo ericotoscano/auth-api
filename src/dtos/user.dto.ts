@@ -30,7 +30,7 @@ export class FindAllUsersDTO {
 
     const results = documents.map((doc) => {
       return {
-        id: doc._id,
+        userId: doc._id,
         firstName: doc.firstName,
         lastName: doc.lastName,
         username: doc.username,
@@ -48,7 +48,7 @@ export class FindAllUsersDTO {
 export class FindUserByIdDTO {
   static toJSON(user: UserType): FindUserByIdDTOType {
     return {
-      id: user._id,
+      userId: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
@@ -66,19 +66,19 @@ export class UpdateUserByIdDTO {
     const updatedFields: string[] = [];
 
     if (!fields || Object.keys(fields).length === 0) {
-      return { id: user._id, updatedFields: [], updatedAt: user.updatedAt };
+      return { userId: user._id, updatedFields: [], updatedAt: user.updatedAt };
     }
 
     for (const field in fields) {
       updatedFields.push(field);
     }
 
-    return { id: user._id, updatedFields, updatedAt: user.updatedAt };
+    return { userId: user._id, updatedFields, updatedAt: user.updatedAt };
   }
 }
 
 export class DeleteUserByIdDTO {
   static toJSON(user: UserType): DeleteUserByIdDTOType {
-    return { id: user._id, deletedAt: new Date().toISOString() };
+    return { userId: user._id, deletedAt: new Date().toISOString() };
   }
 }

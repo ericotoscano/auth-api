@@ -9,11 +9,11 @@ export interface ResetPasswordTokenPayload extends JwtPayload {
   username: string;
 }
 export interface AccessTokenPayload extends JwtPayload {
-  _id: string;
+  id: string;
   username: string;
   email: string;
 }
 export interface RefreshTokenPayload extends JwtPayload {
-  _id: string;
+  id: string;
 }
 export type TokenPayload = VerificationTokenPayload | ResetPasswordTokenPayload | AccessTokenPayload | RefreshTokenPayload;

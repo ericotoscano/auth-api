@@ -32,7 +32,7 @@ export const validateToken =
 
         case "access": {
           try {
-            const user = await findUserService({ _id: payload._id });
+            const user = await findUserService({ _id: payload.id });
 
             req.tokenPayload = payload;
             req.user = user;
@@ -42,7 +42,7 @@ export const validateToken =
                 "Invalid Access Token",
                 "The access token is no longer valid because the associated user does not exist.",
                 "USER_ACCESS_TOKEN_ERROR",
-                { user: payload._id }
+                { userId: payload.id }
               );
             }
             throw err;
@@ -53,7 +53,7 @@ export const validateToken =
         case "refresh": {
           try {
             const user = await findUserService(
-              { _id: payload._id },
+              { _id: payload.id },
               "+refreshToken"
             );
 
@@ -83,7 +83,7 @@ export const validateToken =
                 "Invalid Refresh Token",
                 "The refresh token is no longer valid because the associated user does not exist.",
                 "USER_REFRESH_TOKEN_ERROR",
-                { user: payload._id }
+                { userId: payload.id }
               );
             }
             throw err;

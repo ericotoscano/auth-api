@@ -7,13 +7,13 @@ export type SignedUpUserDTOType = {
 };
 
 export type VerifiedUserDTOType = {
-  id: string;
+  userId: string;
   isVerified: boolean;
   updatedAt: string;
 };
 
 export type LoggedInUserDTOType = {
-  id: string;
+  userId: string;
   accessToken: string;
   lastLogin: string;
   updatedAt: string;
@@ -22,7 +22,7 @@ export type LoggedInUserDTOType = {
 export type FindAllUsersDTOType = {
   pagination: PaginationType;
   results: {
-    id: string;
+    userId: string;
     firstName: string;
     lastName: string;
     username: string;
@@ -31,7 +31,7 @@ export type FindAllUsersDTOType = {
 };
 
 export type FindUserByIdDTOType = {
-  id: string;
+  userId: string;
   firstName: string;
   lastName: string;
   username: string;
@@ -40,18 +40,18 @@ export type FindUserByIdDTOType = {
 };
 
 export type UpdateUserByIdDTOType = {
-  id: string;
+  userId: string;
   updatedFields: string[];
   updatedAt: string;
 };
 
 export type DeleteUserByIdDTOType = {
-  id: string;
+  userId: string;
   deletedAt: string;
 };
 
 export type RefreshedUserAccessTokenDTOType = {
-  id: string;
+  userId: string;
   accessToken: string;
   updatedAt: string;
 };

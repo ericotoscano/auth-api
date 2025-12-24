@@ -33,7 +33,7 @@ router.get(
   validateToken("verification"),
   verifyUser
 );
-
+//testar essa proxima rota, desde os middlewares, checando logs e erros, details, filters
 router.post(
   "/verify/resend",
   validateSchema(userEmailSchema, "body"),

@@ -205,7 +205,7 @@ export const loginService = async (
   }
 
   const accessToken = createToken(
-    { _id: user._id, username: user.username, email: user.email },
+    { id: user._id, username: user.username, email: user.email },
     {
       secret: ENV.ACCESS_TOKEN_SECRET_KEY,
       expiresInMinutes: Number(ENV.ACCESS_TOKEN_DURATION_MINUTES),
@@ -215,7 +215,7 @@ export const loginService = async (
   );
 
   const refreshToken = createToken(
-    { _id: user._id },
+    { id: user._id },
     {
       secret: ENV.REFRESH_TOKEN_SECRET_KEY,
       expiresInMinutes: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES),
@@ -389,7 +389,7 @@ export const refreshUserAccessTokenService = async (
     }
   );
   const refreshToken = createToken(
-    { _id: user._id },
+    { id: user._id },
     {
       secret: ENV.REFRESH_TOKEN_SECRET_KEY,
       expiresInMinutes: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES),

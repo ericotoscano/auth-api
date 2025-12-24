@@ -19,7 +19,7 @@ export class SignedUpUserDTO {
 export class VerifiedUserDTO {
   static toJSON(user: UserType): VerifiedUserDTOType {
     return {
-      id: user._id,
+      userId: user._id,
       isVerified: user.isVerified,
       updatedAt: user.updatedAt,
     };
@@ -29,7 +29,7 @@ export class VerifiedUserDTO {
 export class LoggedInUserDTO {
   static toJSON(user: UserType & { accessToken: string }): LoggedInUserDTOType {
     return {
-      id: user._id,
+      userId: user._id,
       accessToken: user.accessToken,
       lastLogin: user.lastLogin,
       updatedAt: user.updatedAt,
@@ -42,7 +42,7 @@ export class RefreshedUserAccessTokenDTO {
     user: UserType & { accessToken: string }
   ): RefreshedUserAccessTokenDTOType {
     return {
-      id: user._id,
+      userId: user._id,
       accessToken: user.accessToken,
       updatedAt: user.updatedAt,
     };
