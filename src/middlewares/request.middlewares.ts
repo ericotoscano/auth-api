@@ -24,7 +24,7 @@ export const requestLogger = (
       ip: req.ip,
       userAgent: req.headers["user-agent"],
       query: req.query,
-      params: req.params,
+      params: filterInfo(req.params, ["token"]),
       body: filterInfo(req.body, [
         "identifier",
         "password",

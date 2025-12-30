@@ -27,10 +27,10 @@ export class VerifiedUserDTO {
 }
 
 export class LoggedInUserDTO {
-  static toJSON(user: UserType & { accessToken: string }): LoggedInUserDTOType {
+  static toJSON(user: UserType, accessToken: string): LoggedInUserDTOType {
     return {
       userId: user._id,
-      accessToken: user.accessToken,
+      accessToken,
       lastLogin: user.lastLogin,
       updatedAt: user.updatedAt,
     };

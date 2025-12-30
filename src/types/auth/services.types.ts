@@ -3,7 +3,8 @@ import { UserType } from "../user/user.type";
 export type EmailServiceReturn = { emailSent: boolean };
 
 export type LoginServiceReturn = {
-  loggedInUser: UserType & { accessToken: string };
+  loggedInUser: UserType;
+  accessToken: string;
   refreshToken: string;
 };
 

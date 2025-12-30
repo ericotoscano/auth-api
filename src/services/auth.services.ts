@@ -51,7 +51,7 @@ export const verifyUserService = async (
       throw new UnauthorizedError(
         "Token Verification Failed",
         "The provided token is invalid or the associated user does not exist.",
-        "TOKEN_VERIFICATION_ERROR",
+        "TOKEN_ERROR",
         { type: "verification" }
       );
     }
@@ -63,7 +63,7 @@ export const verifyUserService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "VERIFICATION_CONFLICT_ERROR",
+      "USER_CONFLICT_ERROR",
       { isVerified: user.isVerified }
     );
   }
@@ -78,7 +78,7 @@ export const verifyUserService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during verification.",
-        "VERIFY_USER_ERROR",
+        "USER_NOT_FOUND_ERROR",
         {}
       );
     }
@@ -113,7 +113,7 @@ export const resendVerificationEmailService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "VERIFICATION_CONFLICT_ERROR",
+      "USER_CONFLICT_ERROR",
       { isVerified: user.isVerified }
     );
   }
@@ -163,7 +163,7 @@ export const loginService = async (
   password: string
 ): Promise<LoginServiceReturn> => {
   let user: UserType;
-  let updatedUser: UserType;
+  let loggedInUser: UserType;
 
   const loginOption = /\S+@\S+\.\S+/.test(identifier)
     ? { email: identifier }
@@ -188,7 +188,7 @@ export const loginService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before signing in.",
-      "USER_VERIFIED_ERROR",
+      "VERIFIED_USER_ERROR",
       { isVerified: user.isVerified }
     );
   }
@@ -225,7 +225,7 @@ export const loginService = async (
   );
 
   try {
-    updatedUser = await updateUserByIdService(user._id, {
+    loggedInUser = await updateUserByIdService(user._id, {
       set: { refreshToken, lastLogin: new Date().toISOString() },
     });
   } catch (error) {
@@ -234,16 +234,14 @@ export const loginService = async (
         "User Not Found",
         "The user could not be found during login.",
         "USER_NOT_FOUND_ERROR",
-        { userId: user._id }
+        {}
       );
     }
 
     throw error;
   }
 
-  const loggedInUser = { accessToken, ...updatedUser };
-
-  return { loggedInUser, refreshToken };
+  return { loggedInUser, accessToken, refreshToken };
 };
 
 export const logoutService = async (user: UserType): Promise<void> => {

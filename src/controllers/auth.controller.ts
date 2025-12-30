@@ -75,27 +75,6 @@ export const verifyUser = async (
   }
 };
 
-export const resetPassword = async (
-  req: Request<JWTRequestParams, {}, ResetPasswordRequestBody>,
-  res: TypedResponse<{}>,
-  next: NextFunction
-) => {
-  const tokenPayload = req.tokenPayload as ResetPasswordTokenPayload;
-  const { password } = req.body;
-
-  try {
-    await resetPasswordService(tokenPayload, password);
-
-    res.status(200).json({
-      success: true,
-      message: "Password reset successfully.",
-      data: {},
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const resendVerificationEmail = async (
   req: Request<{}, {}, EmailRequestBody>,
   res: TypedResponse<{}>,
@@ -125,7 +104,7 @@ export const login = async (
   const { identifier, password } = req.body;
 
   try {
-    const { loggedInUser, refreshToken } = await loginService(
+    const { loggedInUser, accessToken, refreshToken } = await loginService(
       identifier,
       password
     );
@@ -134,14 +113,14 @@ export const login = async (
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: false, 
+        secure: false,
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })
       .json({
         success: true,
-        message: "Login successful.",
-        data: LoggedInUserDTO.toJSON(loggedInUser),
+        message: "User logged in successfully.",
+        data: LoggedInUserDTO.toJSON(loggedInUser, accessToken),
       });
   } catch (error) {
     next(error);
@@ -162,10 +141,31 @@ export const logout = async (
       .status(204)
       .clearCookie("refreshToken", {
         httpOnly: true,
-        secure: false, 
+        secure: false,
         sameSite: "strict",
       })
       .end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request<JWTRequestParams, {}, ResetPasswordRequestBody>,
+  res: TypedResponse<{}>,
+  next: NextFunction
+) => {
+  const tokenPayload = req.tokenPayload as ResetPasswordTokenPayload;
+  const { password } = req.body;
+
+  try {
+    await resetPasswordService(tokenPayload, password);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully.",
+      data: {},
+    });
   } catch (error) {
     next(error);
   }
@@ -207,7 +207,7 @@ export const refreshUserAccessToken = async (
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: false, 
+        secure: false,
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })

@@ -26,20 +26,17 @@ import { userEmailSchema } from "../schemas/user.schemas";
 const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
-
 router.get(
   "/verify/:token",
   validateSchema(jwtSchema, "params"),
   validateToken("verification"),
   verifyUser
 );
-//testar essa proxima rota, desde os middlewares, checando logs e erros, details, filters
 router.post(
   "/verify/resend",
   validateSchema(userEmailSchema, "body"),
   resendVerificationEmail
 );
-
 router.post("/login", validateSchema(loginSchema, "body"), login);
 
 router.delete(
