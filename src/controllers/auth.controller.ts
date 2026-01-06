@@ -10,10 +10,7 @@ import {
   verifyUserService,
 } from "../services/auth.services";
 import { ENV } from "../utils/env.utils";
-import {
-  ResetPasswordTokenPayload,
-  VerificationTokenPayload,
-} from "../types/token.types";
+import { EmailTokenPayload } from "../types/token.types";
 import { TypedResponse } from "../types/response.types";
 import {
   SignedUpUserDTO,
@@ -29,7 +26,7 @@ import {
 } from "../types/dto.types";
 import {
   SignUpRequestBody,
-  JWTRequestParams,
+  JWTRequestBody,
   ResetPasswordRequestBody,
   EmailRequestBody,
   LoginRequestBody,
@@ -41,7 +38,9 @@ export const signup = async (
   next: NextFunction
 ) => {
   try {
-    const { createdUser, emailSent } = await signUpService(req.body);
+    const signUpBody = req.validated!.body as SignUpRequestBody;
+
+    const { createdUser, emailSent } = await signUpService(signUpBody);
 
     res.status(201).json({
       success: true,
@@ -56,11 +55,11 @@ export const signup = async (
 };
 
 export const verifyUser = async (
-  req: Request<JWTRequestParams>,
+  req: Request<{}, {}, JWTRequestBody>,
   res: TypedResponse<VerifiedUserDTOType>,
   next: NextFunction
 ) => {
-  const tokenPayload = req.tokenPayload as VerificationTokenPayload;
+  const tokenPayload = req.tokenPayload as EmailTokenPayload;
 
   try {
     const verifiedUser = await verifyUserService(tokenPayload);
@@ -80,7 +79,7 @@ export const resendVerificationEmail = async (
   res: TypedResponse<{}>,
   next: NextFunction
 ) => {
-  const { email } = req.body;
+  const { email } = req.validated!.body as EmailRequestBody;
 
   try {
     await resendVerificationEmailService(email);
@@ -101,10 +100,10 @@ export const login = async (
   res: TypedResponse<LoggedInUserDTOType>,
   next: NextFunction
 ) => {
-  const { identifier, password } = req.body;
+  const { identifier, password } = req.validated!.body as LoginRequestBody;
 
   try {
-    const { loggedInUser, accessToken, refreshToken } = await loginService(
+    const { updatedUser, accessToken, refreshToken } = await loginService(
       identifier,
       password
     );
@@ -113,14 +112,14 @@ export const login = async (
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: ENV.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })
       .json({
         success: true,
         message: "User logged in successfully.",
-        data: LoggedInUserDTO.toJSON(loggedInUser, accessToken),
+        data: LoggedInUserDTO.toJSON(updatedUser, accessToken),
       });
   } catch (error) {
     next(error);
@@ -139,33 +138,12 @@ export const logout = async (
 
     res
       .status(204)
-      .clearCookie("refreshToken", {
+      .clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME, {
         httpOnly: true,
-        secure: false,
+        secure: ENV.NODE_ENV === "production",
         sameSite: "strict",
       })
       .end();
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const resetPassword = async (
-  req: Request<JWTRequestParams, {}, ResetPasswordRequestBody>,
-  res: TypedResponse<{}>,
-  next: NextFunction
-) => {
-  const tokenPayload = req.tokenPayload as ResetPasswordTokenPayload;
-  const { password } = req.body;
-
-  try {
-    await resetPasswordService(tokenPayload, password);
-
-    res.status(200).json({
-      success: true,
-      message: "Password reset successfully.",
-      data: {},
-    });
   } catch (error) {
     next(error);
   }
@@ -176,7 +154,7 @@ export const sendResetPasswordEmail = async (
   res: TypedResponse<{}>,
   next: NextFunction
 ) => {
-  const { email } = req.body;
+  const { email } = req.validated!.body as EmailRequestBody;
 
   try {
     await sendResetPasswordEmailService(email);
@@ -192,6 +170,27 @@ export const sendResetPasswordEmail = async (
   }
 };
 
+export const resetPassword = async (
+  req: Request<JWTRequestBody, {}, ResetPasswordRequestBody>,
+  res: TypedResponse<{}>,
+  next: NextFunction
+) => {
+  const tokenPayload = req.tokenPayload as EmailTokenPayload;
+  const { password } = req.validated!.body as ResetPasswordRequestBody;
+
+  try {
+    await resetPasswordService(tokenPayload, password);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully.",
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const refreshUserAccessToken = async (
   req: Request,
   res: TypedResponse<RefreshedUserAccessTokenDTOType>,
@@ -200,21 +199,21 @@ export const refreshUserAccessToken = async (
   const user = req.user!;
 
   try {
-    const { refreshedUserAccessToken, refreshToken } =
+    const { updatedUser, accessToken, refreshToken } =
       await refreshUserAccessTokenService(user);
 
     res
       .status(200)
       .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: ENV.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
       })
       .json({
         success: true,
         message: "Access token refreshed successfully.",
-        data: RefreshedUserAccessTokenDTO.toJSON(refreshedUserAccessToken),
+        data: RefreshedUserAccessTokenDTO.toJSON(updatedUser, accessToken),
       });
   } catch (error) {
     next(error);

@@ -19,10 +19,11 @@ export type FindAllUsersReturn = {
   pagination: PaginationType;
 };
 
-export type FindUserFilter =
-  | { _id: string }
-  | { username: string }
-  | { email: string };
+export type FindUserFilter = {
+  _id?: string;
+  username?: string;
+  email?: string;
+};
 
 export type UpdateUserOptions = {
   set?: UpdateUserFields;

@@ -16,9 +16,3 @@ export const filterInfo = (
 
   return out;
 };
-
-export const filterPath = (path: string): string => {
-  const jwtRegex = /[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
-  
-  return path.replace(jwtRegex, "***MASKED_TOKEN***");
-};

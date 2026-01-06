@@ -41,9 +41,10 @@ export const envSchema = z.object({
       }
     ),
 
-  NODE_ENV: z.enum(["development", "test"], {
+  NODE_ENV: z.enum(["development", "test", "production"], {
     required_error: "NODE_ENV is required",
-    invalid_type_error: "NODE_ENV must be one of: development, test",
+    invalid_type_error:
+      "NODE_ENV must be one of: development, test, production",
   }),
 
   LOG_LEVEL: z.enum(
@@ -63,6 +64,11 @@ export const envSchema = z.object({
   TEST_DB_URI: z.string({
     required_error: "TEST_DB_URI is required",
     invalid_type_error: "TEST_DB_URI must be a string",
+  }),
+  
+  PROD_DB_URI: z.string({
+    required_error: "PROD_DB_URI is required",
+    invalid_type_error: "PROD_DB_URI must be a string",
   }),
 
   MAIL_HOST: z.string({

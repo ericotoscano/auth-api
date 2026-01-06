@@ -13,12 +13,12 @@ export const sendEmailService = async (
 
     await transporter.verify();
 
-    const info = await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 
     return true;
   } catch (error: any) {
     logger.error(`Failed to send ${type} email`, {
-      errorCode: error.code,
+      errorCode: "EMAIL_SEND_FAILED",
       details: { message: error.message },
       stack: error.stack,
     });
@@ -35,7 +35,7 @@ const getEmailOptions = (
 
   switch (type) {
     case "verification":
-      const verificationUrl: string = `${ENV.APP_ORIGIN}:${ENV.API_PORT}/api/v1/auth/verify/${token}`;
+      const verificationUrl: string = `${ENV.APP_ORIGIN}${ENV.API_PORT}/verify.html?token=${token}`;
       return {
         from: "noreply@authapi.com",
         to: email,
@@ -44,10 +44,10 @@ const getEmailOptions = (
           <h1>Verify Your Account</h1>
           <p>Hello,</p>
           <p>Thank you for signing up for <strong>Auth Api</strong>!</p>
-          <p>To verify your account, please click the link below or paste it into your browser:</p>
+          <p>To verify your account, please click the link below:</p>
           <p><a href="${verificationUrl}">Click here to verify your account</a></p>
-          <p><strong>Note:</strong> This token will expire in ${ENV.VERIFICATION_TOKEN_DURATION_MINUTES} minutes for security reasons.</p>
-          <p><em>If you did not create an account with us, you can safely ignore this email.</em></p>
+          <p><strong>Note:</strong> This token will expire in ${ENV.VERIFICATION_TOKEN_DURATION_MINUTES} minutes.</p>
+          <p><em>If you did not create an account, you can safely ignore this email.</em></p>
           <p><strong>This is an automated message. Please do not reply.</strong></p>
           <p>Best regards,<br>ETOSolutions</p>
         `,

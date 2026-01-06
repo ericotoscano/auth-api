@@ -2,17 +2,21 @@ import mongoose from "mongoose";
 import { ENV } from "./env.utils";
 import User from "../models/user.model";
 import { logger } from "./logger";
+import { InternalServerError } from "../config/CustomError";
 
 export const connectToDB = async () => {
   try {
     const mongoUri = {
       test: ENV.TEST_DB_URI,
       development: ENV.DEV_DB_URI,
+      production: ENV.PROD_DB_URI,
     }[ENV.NODE_ENV];
 
     if (!mongoUri)
-      throw new Error(
-        `DB connection URI is not defined for environment: ${ENV.NODE_ENV}`
+      throw new InternalServerError(
+        "Database Configuration Error",
+        `Database URI is not defined for environment: ${ENV.NODE_ENV}`,
+        "SYSTEM_UNEXPECTED"
       );
 
     const mongoDB = await mongoose.connect(mongoUri, {
@@ -25,25 +29,49 @@ export const connectToDB = async () => {
     logger.info(
       `Connected to DB (${ENV.NODE_ENV}): ${mongoDB.connection.host}`
     );
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    logger.error("Failed to connect to database", {
+      errorCode: "SYSTEM_UNEXPECTED",
+      details: error.message,
+      stack: error.stack,
+    });
+
+    throw new InternalServerError(
+      "Database Connection Failed",
+      "Failed to connect to the database. Please try again later.",
+      "SYSTEM_UNEXPECTED"
+    );
   }
 };
 
 export async function disconnectToDB() {
-  await mongoose.disconnect();
+  try {
+    await mongoose.disconnect();
+
+    logger.info("Disconnected from database");
+  } catch (error: any) {
+    logger.warn("Failed to disconnect from database", {
+      errorCode: "SYSTEM_UNEXPECTED",
+      details: error.message,
+    });
+  }
 }
 
-export async function clearDatabase() {
+export const clearDatabase = async () => {
   const collections = mongoose.connection.collections;
-  
+
   for (const key in collections) {
     const coll = collections[key];
     try {
       await coll.deleteMany({});
-    } catch (err) {}
+    } catch (error: any) {
+      logger.warn("Failed to clear collection", {
+        collection: key,
+        error: error.message,
+      });
+    }
   }
-}
+};
 
 export const runInTransaction = async <T>(
   fn: (session: mongoose.ClientSession) => Promise<T>
@@ -63,7 +91,9 @@ export const runInTransaction = async <T>(
     session.endSession();
 
     throw error;
-  }
+  } finally {
+    session.endSession();
+  } 
 };
 
 export { mongoose };

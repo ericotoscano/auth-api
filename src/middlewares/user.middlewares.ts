@@ -9,23 +9,21 @@ export const validateUserSelfPermission = async (
   try {
     if (!req.user) {
       throw new UnauthorizedError(
-        "Missing Authenticated User",
-        "No authenticated user found in request.",
-        "MISSING_USER_ERROR",
-        {}
+        "Unauthorized",
+        "Authentication is required to perform this action.",
+        "AUTH_UNAUTHORIZED"
       );
     }
 
     const authenticatedUserId = req.user._id;
 
-    const targetUserId = req.params.id;
+    const { id: targetUserId } = req.validated!.params as { id: string };
 
     if (String(authenticatedUserId) !== String(targetUserId)) {
       throw new ForbiddenError(
-        "Forbidden Action",
-        "You do not have permission to perform this action for this user.",
-        "FORBIDDEN_ACTION_ERROR",
-        {}
+        "Forbidden",
+        "You do not have permission to perform this action.",
+        "AUTH_FORBIDDEN"
       );
     }
 

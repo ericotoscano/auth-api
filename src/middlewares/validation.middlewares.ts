@@ -5,22 +5,14 @@ import { BadRequestError } from "../config/CustomError";
 type RequestSection = "body" | "params" | "query" | "headers" | "cookies";
 
 export const validateSchema =
-  (schema: ZodSchema, requestSection: RequestSection): RequestHandler =>
+  (schema: ZodSchema, section: RequestSection): RequestHandler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      const sections: Record<RequestSection, any> = {
-        body: req.body,
-        params: req.params,
-        query: req.query,
-        headers: req.headers,
-        cookies: req.cookies,
-      };
+      const parsed = schema.parse(req[section]);
 
-      const dataToValidate = sections[requestSection];
+      req.validated ??= {};
 
-      const parsed = schema.parse(dataToValidate);
-
-      req[requestSection] = parsed;
+      req.validated[section] = parsed;
 
       next();
     } catch (error) {
@@ -28,7 +20,7 @@ export const validateSchema =
         const details: Record<string, string> = {};
 
         for (const issue of error.issues) {
-          const field = issue.path.join(".") || requestSection;
+          const field = issue.path.join(".") || section;
 
           if (!details[field]) {
             details[field] = issue.message;
@@ -38,8 +30,8 @@ export const validateSchema =
         return next(
           new BadRequestError(
             "Request Validation Failed",
-            "See 'details' for validation feedbacks by field.",
-            "VALIDATE_SCHEMA_ERROR",
+            "One or more request fields failed validation.",
+            "VALIDATION_SCHEMA_FAILED",
             details
           )
         );

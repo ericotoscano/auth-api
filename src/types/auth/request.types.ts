@@ -15,4 +15,4 @@ export type ResetPasswordRequestBody = z.infer<typeof resetPasswordSchema>;
 
 export type EmailRequestBody = z.infer<typeof userEmailSchema>;
 
-export type JWTRequestParams = z.infer<typeof jwtSchema>;
+export type JWTRequestBody = z.infer<typeof jwtSchema>;

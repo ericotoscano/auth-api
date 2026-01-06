@@ -56,19 +56,20 @@ export const createUserService = async (
       error instanceof mongoose.mongo.MongoServerError &&
       error.code === 11000
     ) {
+      const field = Object.keys(error.keyPattern)[0];
+
       throw new ConflictError(
         "User Creation Conflict",
         "This username or email is already in use.",
-        "USER_CONFLICT_ERROR",
-        {}
+        "USER_CONFLICT",
+        { field }
       );
     }
 
     throw new InternalServerError(
       "User Creation Failed",
       "An unexpected error ocurred while creating user. Please try again later.",
-      "CREATE_USER_ERROR",
-      {}
+      "USER_CREATE_FAILED"
     );
   }
 };
@@ -115,10 +116,9 @@ export const findAllUsersService = async (
     }
 
     throw new InternalServerError(
-      "Failed to Find Users",
+      "Failed to Retrieve Users",
       "An unexpected error occurred while loading users from the database. Please try again later.",
-      "FIND_USERS_DB_ERROR",
-      {}
+      "SYSTEM_UNEXPECTED"
     );
   }
 };
@@ -126,18 +126,17 @@ export const findAllUsersService = async (
 export const findUserService = async (
   filter: FindUserFilter,
   selectFields?: string
-) => {
+): Promise<UserType> => {
   try {
     const document = selectFields
       ? await User.findOne(filter, selectFields)
       : await User.findOne(filter);
-    //arrumar aqui o filter para nao expor dados sensiveis
+
     if (!document) {
       throw new NotFoundError(
         "User Not Found",
-        "No user matching the provided filter was found in the database.",
-        `USER_NOT_FOUND_ERROR`,
-        filter
+        "No user matching the provided criteria was found.",
+        `USER_NOT_FOUND`
       );
     }
 
@@ -147,9 +146,8 @@ export const findUserService = async (
 
     throw new InternalServerError(
       "Failed to Retrieve User",
-      "An unexpected error occurred while loading requested user from the database. Please try again later.",
-      "FIND_USER_DB_ERROR",
-      {}
+      "An unexpected error occurred while loading requested user. Please try again later.",
+      "SYSTEM_UNEXPECTED"
     );
   }
 };
@@ -158,7 +156,7 @@ export const updateUserByIdService = async (
   id: string,
   options: UpdateUserOptions,
   session?: mongoose.ClientSession
-) => {
+): Promise<UserType> => {
   try {
     const updateQuery = buildUpdateQuery(options);
 
@@ -170,9 +168,8 @@ export const updateUserByIdService = async (
     if (!updatedDocument) {
       throw new NotFoundError(
         "User Not Found",
-        `No user with id ${id} was found to update.`,
-        "USER_NOT_FOUND_ERROR",
-        { userId: id }
+        "No user was found to update.",
+        "USER_NOT_FOUND"
       );
     }
 
@@ -185,19 +182,20 @@ export const updateUserByIdService = async (
       error instanceof mongoose.mongo.MongoServerError &&
       error.code === 11000
     ) {
+      const field = Object.keys(error.keyPattern)[0];
+
       throw new ConflictError(
         "User Update Conflict",
         "Some field provided to update is already in use.",
-        "USER_CONFLICT_ERROR",
-        error.keyValue
+        "USER_CONFLICT",
+        { field }
       );
     }
 
     throw new InternalServerError(
       "Failed to Update User",
-      `An unexpected error occurred while updating user in the database. Please try again later.`,
-      "UPDATE_USER_DB_ERROR",
-      {}
+      `An unexpected error occurred while updating the user. Please try again later.`,
+      "SYSTEM_UNEXPECTED"
     );
   }
 };
@@ -205,28 +203,26 @@ export const updateUserByIdService = async (
 export const deleteUserByIdService = async (
   id: string,
   session?: mongoose.ClientSession
-) => {
+): Promise<void> => {
   try {
     const deletedDocument = await User.findByIdAndDelete(id, { session });
 
     if (!deletedDocument) {
       throw new NotFoundError(
         "User Not Found",
-        `No user with id ${id} was found to delete.`,
-        "USER_NOT_FOUND_ERROR",
-        { userId: id }
+        `No user was found to delete.`,
+        "USER_NOT_FOUND"
       );
     }
 
-    return deletedDocument.toObject() as UserType;
+    return;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
 
     throw new InternalServerError(
       "Failed to Delete User",
-      "An unexpected error occurred while deleting user in the database. Please try again later.",
-      "DELETE_USER_DB_ERROR",
-      {}
+      "An unexpected error occurred while deleting the user. Please try again later.",
+      "SYSTEM_UNEXPECTED"
     );
   }
 };

@@ -3,7 +3,11 @@ import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../config/CustomError";
 import { findUserService } from "../services/user.services.ts";
 import { TokenTypes } from "../types/token.types.ts";
-import { checkToken, getTokenFromRequest } from "../utils/token.utils.ts";
+import {
+  checkToken,
+  getTokenFromRequest,
+  throwInvalidTokenError,
+} from "../utils/token.utils.ts";
 import { ENV } from "../utils/env.utils.ts";
 
 export const validateToken =
@@ -16,7 +20,7 @@ export const validateToken =
         throw new UnauthorizedError(
           "Missing Token",
           "No token was provided.",
-          "MISSING_TOKEN_ERROR",
+          "AUTH_MISSING_TOKEN",
           { type }
         );
       }
@@ -38,12 +42,7 @@ export const validateToken =
             req.user = user;
           } catch (err) {
             if (err instanceof NotFoundError) {
-              throw new UnauthorizedError(
-                "Invalid Access Token",
-                "The access token is no longer valid because the associated user does not exist.",
-                "USER_ACCESS_TOKEN_ERROR",
-                { userId: payload.id }
-              );
+              throwInvalidTokenError(type);
             }
             throw err;
           }
@@ -65,12 +64,7 @@ export const validateToken =
             if (!isValid) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
 
-              throw new UnauthorizedError(
-                "Invalid Token",
-                "The token is invalid or has expired.",
-                "INVALID_TOKEN_ERROR",
-                { type }
-              );
+              throwInvalidTokenError(type);
             }
 
             req.tokenPayload = payload;
@@ -79,12 +73,7 @@ export const validateToken =
             if (err instanceof NotFoundError) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
 
-              throw new UnauthorizedError(
-                "Invalid Refresh Token",
-                "The refresh token is no longer valid because the associated user does not exist.",
-                "USER_REFRESH_TOKEN_ERROR",
-                { userId: payload.id }
-              );
+              throwInvalidTokenError(type);
             }
             throw err;
           }

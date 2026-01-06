@@ -10,7 +10,6 @@ import {
   UpdateUserRequestBody,
 } from "../types/user/request.types";
 import {
-  DeleteUserByIdDTO,
   FindAllUsersDTO,
   FindUserByIdDTO,
   UpdateUserByIdDTO,
@@ -21,7 +20,6 @@ import {
   FindAllUsersDTOType,
   FindUserByIdDTOType,
   UpdateUserByIdDTOType,
-  DeleteUserByIdDTOType,
 } from "../types/dto.types";
 import { buildBaseUrl } from "../utils/builders.utils";
 
@@ -56,7 +54,7 @@ export const findUserById = async (
   res: TypedResponse<FindUserByIdDTOType>,
   next: NextFunction
 ) => {
-  const { id } = req.params;
+  const { id } = req.validated!.params as UserIdRequest;
 
   try {
     const user = await findUserService({ _id: id });
@@ -76,8 +74,8 @@ export const updateUserById = async (
   res: TypedResponse<UpdateUserByIdDTOType>,
   next: NextFunction
 ) => {
-  const { id } = req.params;
-  const updateOptions = req.body;
+  const { id } = req.validated!.params as UserIdRequest;
+  const updateOptions = req.validated!.body as UpdateUserRequestBody;
 
   try {
     const updatedUser = await updateUserByIdService(id, {
@@ -96,18 +94,18 @@ export const updateUserById = async (
 
 export const deleteUserById = async (
   req: Request<UserIdRequest>,
-  res: TypedResponse<DeleteUserByIdDTOType>,
+  res: TypedResponse<{}>,
   next: NextFunction
 ) => {
-  const { id } = req.params;
+  const { id } = req.validated!.params as UserIdRequest;
 
   try {
-    const deletedUser = await deleteUserByIdService(id);
+    await deleteUserByIdService(id);
 
     res.status(200).json({
       success: true,
       message: "User deleted successfully.",
-      data: DeleteUserByIdDTO.toJSON(deletedUser),
+      data: {},
     });
   } catch (error) {
     next(error);

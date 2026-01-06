@@ -1,11 +1,12 @@
-import { JwtPayload } from 'jsonwebtoken';
+import { JwtPayload } from "jsonwebtoken";
 
-export type TokenTypes = 'verification' | 'resetPassword' | 'access' | 'refresh';
+export type TokenTypes =
+  | "verification"
+  | "resetPassword"
+  | "access"
+  | "refresh";
 
-export interface VerificationTokenPayload extends JwtPayload {
-  username: string;
-}
-export interface ResetPasswordTokenPayload extends JwtPayload {
+export interface EmailTokenPayload extends JwtPayload {
   username: string;
 }
 export interface AccessTokenPayload extends JwtPayload {
@@ -16,4 +17,8 @@ export interface AccessTokenPayload extends JwtPayload {
 export interface RefreshTokenPayload extends JwtPayload {
   id: string;
 }
-export type TokenPayload = VerificationTokenPayload | ResetPasswordTokenPayload | AccessTokenPayload | RefreshTokenPayload;
+
+export type TokenPayload =
+  | EmailTokenPayload
+  | AccessTokenPayload
+  | RefreshTokenPayload;

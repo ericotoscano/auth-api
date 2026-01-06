@@ -13,7 +13,6 @@ const prettyOrderedJSON = printf((info) => {
     ip: info.ip,
     userAgent: info.userAgent,
     query: info.query,
-    params: info.params,
     body: info.body,
     contentLength: info.contentLength,
     errorCode: info.errorCode,
@@ -40,3 +39,10 @@ export const logger = winston.createLogger({
     }),
   ],
 });
+
+export const warnPrefixes = [
+  "AUTH_",
+  "VALIDATION_",
+  "USER_CONFLICT",
+  "USER_NOT_FOUND",
+];

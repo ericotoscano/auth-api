@@ -152,10 +152,9 @@ export const buildUpdateQuery = (
 
   if (Object.keys(updateQuery).length === 0) {
     throw new BadRequestError(
-      "No Provided Fields to Update",
+      "Invalid Update Payload",
       "You must provide at least one field to update or remove.",
-      "FIELDS_UPDATE_ERROR",
-      {}
+      "INVALID_UPDATE_PAYLOAD"
     );
   }
 

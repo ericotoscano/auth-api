@@ -26,34 +26,29 @@ import { userEmailSchema } from "../schemas/user.schemas";
 const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
-router.get(
-  "/verify/:token",
-  validateSchema(jwtSchema, "params"),
+router.post("/login", validateSchema(loginSchema, "body"), login);
+
+router.post(
+  "/verify",
+  validateSchema(jwtSchema, "body"),
   validateToken("verification"),
   verifyUser
 );
+//vir daqui
 router.post(
-  "/verify/resend",
+  "/verification/resend",
   validateSchema(userEmailSchema, "body"),
   resendVerificationEmail
 );
-router.post("/login", validateSchema(loginSchema, "body"), login);
-
-router.delete(
-  "/logout",
-  validateSchema(authorizationSchema, "headers"),
-  validateToken("refresh"),
-  logout
-);
 
 router.post(
-  "/password/request",
+  "/password/forgot",
   validateSchema(userEmailSchema, "body"),
   sendResetPasswordEmail
 );
 router.post(
-  "/password/reset/:token",
-  validateSchema(jwtSchema, "params"),
+  "/password/reset",
+  validateSchema(jwtSchema, "body"),
   validateToken("resetPassword"),
   validateSchema(resetPasswordSchema, "body"),
   resetPassword
@@ -64,6 +59,12 @@ router.post(
   validateSchema(refreshTokenSchema, "cookies"),
   validateToken("refresh"),
   refreshUserAccessToken
+);
+router.post(
+  "/logout",
+  validateSchema(authorizationSchema, "headers"),
+  validateToken("refresh"),
+  logout
 );
 
 export default router;

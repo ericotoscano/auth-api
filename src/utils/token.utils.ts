@@ -16,8 +16,10 @@ export const getTokenFromRequest: Record<
   TokenTypes,
   (req: Request) => string | undefined
 > = {
-  verification: (req) => req.params.token,
-  resetPassword: (req) => req.params.token,
+  verification: (req) =>
+    (req.validated?.body as { token: string } | undefined)?.token,
+  resetPassword: (req) =>
+    (req.validated?.body as { token: string } | undefined)?.token,
   access: (req) => req.headers.authorization?.replace("Bearer ", ""),
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],
 } as const;
@@ -48,32 +50,36 @@ export const checkToken = async (
       throw new UnauthorizedError(
         "Expired Token",
         "The token has expired. Please request a new one.",
-        "EXPIRED_TOKEN_ERROR",
+        "AUTH_EXPIRED_TOKEN",
         { type }
       );
     }
     if (error instanceof jwt.NotBeforeError) {
       throw new UnauthorizedError(
-        "Not Active Token",
+        "Inactive Token",
         "The token is not active yet.",
-        "NOT_ACTIVE_TOKEN_ERROR",
+        "AUTH_INACTIVE_TOKEN",
         { type }
       );
     }
     if (error instanceof jwt.JsonWebTokenError) {
-      throw new UnauthorizedError(
-        "Invalid Token",
-        "The token is invalid or has been tampered with.",
-        "INVALID_TOKEN_ERROR",
-        { type }
-      );
+      throwInvalidTokenError(type);
     }
 
     throw new InternalServerError(
-      "Failed to Checking Token",
-      `An unexpected error occurred while checking the token.`,
-      `CHECK_TOKEN_ERROR`,
+      "Token Validation Failed",
+      "An unexpected error occurred while validating the token.",
+      "SYSTEM_TOKEN_VALIDATION_FAILED",
       { type }
     );
   }
+};
+
+export const throwInvalidTokenError = (type: TokenTypes) => {
+  throw new UnauthorizedError(
+    "Invalid Token",
+    "The token is invalid.",
+    "AUTH_INVALID_TOKEN",
+    { type }
+  );
 };

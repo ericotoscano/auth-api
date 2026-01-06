@@ -11,18 +11,12 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../config/CustomError";
-import {
-  LoginServiceReturn,
-  RefreshUserAccessTokenServiceReturn,
-} from "../types/auth/services.types";
+import { UserAndTokenServiceReturn } from "../types/auth/services.types";
 import { UserType } from "../types/user/user.type";
 import { ENV } from "../utils/env.utils";
-import {
-  ResetPasswordTokenPayload,
-  VerificationTokenPayload,
-} from "../types/token.types";
+import { EmailTokenPayload } from "../types/token.types";
 import { SignUpRequestBody } from "../types/auth/request.types";
-import { createToken } from "../utils/token.utils";
+import { createToken, throwInvalidTokenError } from "../utils/token.utils";
 import { SignUpServiceReturn } from "../types/user/services.types";
 
 export const signUpService = async (
@@ -39,7 +33,7 @@ export const signUpService = async (
 };
 
 export const verifyUserService = async (
-  tokenPayload: VerificationTokenPayload
+  tokenPayload: EmailTokenPayload
 ): Promise<UserType> => {
   let user: UserType;
   let verifiedUser: UserType;
@@ -48,12 +42,7 @@ export const verifyUserService = async (
     user = await findUserService({ username: tokenPayload.username });
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throw new UnauthorizedError(
-        "Token Verification Failed",
-        "The provided token is invalid or the associated user does not exist.",
-        "TOKEN_ERROR",
-        { type: "verification" }
-      );
+      throwInvalidTokenError("verification");
     }
 
     throw error;
@@ -63,8 +52,7 @@ export const verifyUserService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "USER_CONFLICT_ERROR",
-      { isVerified: user.isVerified }
+      "USER_CONFLICT"
     );
   }
 
@@ -74,16 +62,11 @@ export const verifyUserService = async (
       unset: ["verificationToken"],
     });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during verification.",
-        "USER_NOT_FOUND_ERROR",
-        {}
-      );
-    }
-
-    throw error;
+    throw new InternalServerError(
+      "User Verification Failed",
+      "An unexpected error occurred while verifying the user.",
+      "USER_UPDATE_FAILED"
+    );
   }
 
   return verifiedUser;
@@ -98,12 +81,7 @@ export const resendVerificationEmailService = async (
     user = await findUserService({ email });
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The provided email is incorrect or the user does not exist.",
-        "USER_NOT_FOUND_ERROR",
-        {}
-      );
+      return;
     }
 
     throw error;
@@ -113,7 +91,7 @@ export const resendVerificationEmailService = async (
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
-      "USER_CONFLICT_ERROR",
+      "USER_CONFLICT",
       { isVerified: user.isVerified }
     );
   }
@@ -135,8 +113,7 @@ export const resendVerificationEmailService = async (
       throw new NotFoundError(
         "User Not Found",
         "The user could not be found during resend verification email.",
-        "USER_NOT_FOUND_ERROR",
-        {}
+        "USER_NOT_FOUND"
       );
     }
 
@@ -152,8 +129,7 @@ export const resendVerificationEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to resend the verification email. Please try again later.",
-      "RESEND_EMAIL_ERROR",
-      {}
+      "EMAIL_SEND_FAILED"
     );
   }
 };
@@ -161,9 +137,9 @@ export const resendVerificationEmailService = async (
 export const loginService = async (
   identifier: string,
   password: string
-): Promise<LoginServiceReturn> => {
+): Promise<UserAndTokenServiceReturn> => {
   let user: UserType;
-  let loggedInUser: UserType;
+  let updatedUser: UserType;
 
   const loginOption = /\S+@\S+\.\S+/.test(identifier)
     ? { email: identifier }
@@ -175,9 +151,8 @@ export const loginService = async (
     if (error instanceof NotFoundError) {
       throw new UnauthorizedError(
         "Invalid Credentials",
-        "The provided email or password is incorrect or the user does not exist.",
-        "CREDENTIALS_ERROR",
-        {}
+        "The provided email or password is incorrect.",
+        "AUTH_INVALID_CREDENTIALS"
       );
     }
 
@@ -188,8 +163,7 @@ export const loginService = async (
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before signing in.",
-      "VERIFIED_USER_ERROR",
-      { isVerified: user.isVerified }
+      "AUTH_USER_NOT_VERIFIED"
     );
   }
 
@@ -198,9 +172,8 @@ export const loginService = async (
   if (!isPasswordValid) {
     throw new UnauthorizedError(
       "Invalid Credentials",
-      "The provided email or password is incorrect or the user does not exist.",
-      "CREDENTIALS_ERROR",
-      {}
+      "The provided email or password is incorrect.",
+      "AUTH_INVALID_CREDENTIALS"
     );
   }
 
@@ -225,23 +198,22 @@ export const loginService = async (
   );
 
   try {
-    loggedInUser = await updateUserByIdService(user._id, {
+    updatedUser = await updateUserByIdService(user._id, {
       set: { refreshToken, lastLogin: new Date().toISOString() },
     });
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during login.",
-        "USER_NOT_FOUND_ERROR",
-        {}
+      throw new InternalServerError(
+        "User Update Failed",
+        "An unexpected error occurred while updating the user session.",
+        "USER_UPDATE_FAILED"
       );
     }
 
     throw error;
   }
 
-  return { loggedInUser, accessToken, refreshToken };
+  return { updatedUser, accessToken, refreshToken };
 };
 
 export const logoutService = async (user: UserType): Promise<void> => {
@@ -250,16 +222,11 @@ export const logoutService = async (user: UserType): Promise<void> => {
   try {
     await updateUserByIdService(_id, { unset: ["refreshToken"] });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during logout.",
-        "USER_NOT_FOUND_ERROR",
-        { userId: _id }
-      );
-    }
-
-    throw error;
+    throw new InternalServerError(
+      "User Update Failed",
+      "An unexpected error occurred while updating the user session.",
+      "USER_UPDATE_FAILED"
+    );
   }
 };
 
@@ -272,12 +239,7 @@ export const sendResetPasswordEmailService = async (
     user = await findUserService({ email });
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The provided email is incorrect or the user does not exist.",
-        "USER_NOT_FOUND_ERROR",
-        {}
-      );
+      return;
     }
 
     throw error;
@@ -296,16 +258,11 @@ export const sendResetPasswordEmailService = async (
   try {
     await updateUserByIdService(user._id, { set: { resetPasswordToken } });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during send reset password email.",
-        "USER_NOT_FOUND_ERROR",
-        { userId: user._id }
-      );
-    }
-
-    throw error;
+    throw new InternalServerError(
+      "User Update Failed",
+      "An unexpected error occurred while preparing the password reset.",
+      "USER_UPDATE_FAILED"
+    );
   }
 
   const emailSent = await sendEmailService("resetPassword", {
@@ -317,14 +274,13 @@ export const sendResetPasswordEmailService = async (
     throw new InternalServerError(
       "Email Not Sent",
       "Failed to send the reset password email. Please try again later.",
-      "RESET_PASSWORD_EMAIL_ERROR",
-      {}
+      "EMAIL_SEND_FAILED"
     );
   }
 };
 
 export const resetPasswordService = async (
-  tokenPayload: ResetPasswordTokenPayload,
+  tokenPayload: EmailTokenPayload,
   password: string
 ): Promise<void> => {
   let user: UserType;
@@ -334,10 +290,9 @@ export const resetPasswordService = async (
   } catch (error) {
     if (error instanceof NotFoundError) {
       throw new UnauthorizedError(
-        "Invalid Token",
-        "The provided reset password token is invalid or the user does not exist.",
-        "RESET_PASSWORD_TOKEN_ERROR",
-        { type: "reset-password" }
+        "Invalid Reset Token",
+        "The reset password token is invalid or has expired.",
+        "AUTH_INVALID_TOKEN"
       );
     }
 
@@ -347,9 +302,8 @@ export const resetPasswordService = async (
   if (!user.isVerified) {
     throw new UnauthorizedError(
       "User Not Verified",
-      "This account must be verified before requesting a password reset.",
-      "USER_VERIFIED_ERROR",
-      { isVerified: user.isVerified }
+      "This account must be verified before resetting the password.",
+      "AUTH_USER_NOT_VERIFIED"
     );
   }
 
@@ -359,22 +313,17 @@ export const resetPasswordService = async (
       unset: ["resetPasswordToken"],
     });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during reset password.",
-        "USER_NOT_FOUND_ERROR",
-        { userId: user._id }
-      );
-    }
-
-    throw error;
+    throw new InternalServerError(
+      "Password Reset Failed",
+      "An unexpected error occurred while resetting the password.",
+      "USER_UPDATE_FAILED"
+    );
   }
 };
 
 export const refreshUserAccessTokenService = async (
   user: UserType
-): Promise<RefreshUserAccessTokenServiceReturn> => {
+): Promise<UserAndTokenServiceReturn> => {
   let updatedUser: UserType;
 
   const accessToken = createToken(
@@ -401,19 +350,12 @@ export const refreshUserAccessTokenService = async (
       set: { refreshToken },
     });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during refresh access token.",
-        "USER_NOT_FOUND_ERROR",
-        { userId: user._id }
-      );
-    }
-
-    throw error;
+    throw new InternalServerError(
+      "Token Refresh Failed",
+      "An unexpected error occurred while refreshing the access token.",
+      "USER_UPDATE_FAILED"
+    );
   }
 
-  const refreshedUserAccessToken = { ...updatedUser, accessToken };
-
-  return { refreshedUserAccessToken, refreshToken };
+  return { updatedUser, accessToken, refreshToken };
 };

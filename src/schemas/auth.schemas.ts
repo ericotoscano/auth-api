@@ -47,11 +47,11 @@ export const signUpBaseSchema = z.object({
 
   confirm: z
     .string({
-      required_error: "confirm password is required.",
-      invalid_type_error: "confirm password must be a string.",
+      required_error: "confirm is required.",
+      invalid_type_error: "confirm must be a string.",
     })
     .trim()
-    .min(1, { message: "confirm password cannot be empty." }),
+    .min(1, { message: "confirm cannot be empty." }),
 });
 
 export const signUpSchema = signUpBaseSchema.refine(
