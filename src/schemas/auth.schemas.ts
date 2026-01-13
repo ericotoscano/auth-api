@@ -84,15 +84,12 @@ export const loginSchema = z
     }
   });
 
-const resetPasswordBaseSchema = signUpBaseSchema.pick({
-  password: true,
-  confirm: true,
-});
-
-export const resetPasswordSchema = resetPasswordBaseSchema.refine(
-  (data) => data.password === data.confirm,
-  {
+export const resetPasswordSchema = signUpBaseSchema
+  .pick({
+    password: true,
+    confirm: true,
+  })
+  .refine((data) => data.password === data.confirm, {
     message: "password and confirm must match.",
     path: ["confirm"],
-  }
-);
+  });

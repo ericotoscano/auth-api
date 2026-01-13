@@ -11,9 +11,9 @@ declare global {
         query?: unknown;
         headers?: unknown;
         cookies?: unknown;
+        user?: UserType;
+        tokenPayload?: TokenPayload;
       };
-      user?: UserType;
-      tokenPayload?: TokenPayload;
     }
   }
 }

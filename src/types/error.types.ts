@@ -20,4 +20,26 @@ export const errorCodes = {
   SYSTEM_TOKEN_VALIDATION_FAILED: "SYSTEM_TOKEN_VALIDATION_FAILED",
 } as const;
 
+export const errorLevel: Record<ErrorCode, "warn" | "error"> = {
+  AUTH_INVALID_TOKEN: "warn",
+  AUTH_EXPIRED_TOKEN: "warn",
+  AUTH_MISSING_TOKEN: "warn",
+  AUTH_INACTIVE_TOKEN: "warn",
+  AUTH_UNAUTHORIZED: "warn",
+  AUTH_FORBIDDEN: "warn",
+  AUTH_INVALID_CREDENTIALS: "warn",
+  AUTH_USER_NOT_VERIFIED: "warn",
+  VALIDATION_SCHEMA_FAILED: "warn",
+  VALIDATION_PAYLOAD_INVALID: "warn",
+  INVALID_UPDATE_PAYLOAD: "warn",
+  USER_CONFLICT: "warn",
+  USER_NOT_FOUND: "warn",
+  USER_CREATE_FAILED: "error",
+  USER_RETRIEVE_FAILED: "error",
+  USER_UPDATE_FAILED: "error",
+  EMAIL_SEND_FAILED: "error",
+  SYSTEM_UNEXPECTED: "error",
+  SYSTEM_TOKEN_VALIDATION_FAILED: "error",
+};
+
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];

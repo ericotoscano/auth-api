@@ -54,12 +54,43 @@ export const signup = async (
   }
 };
 
+export const login = async (
+  req: Request<{}, {}, LoginRequestBody>,
+  res: TypedResponse<LoggedInUserDTOType>,
+  next: NextFunction
+) => {
+  const { identifier, password } = req.validated!.body as LoginRequestBody;
+
+  try {
+    const { updatedUser, accessToken, refreshToken } = await loginService(
+      identifier,
+      password
+    );
+
+    res
+      .status(200)
+      .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
+      })
+      .json({
+        success: true,
+        message: "User logged in successfully.",
+        data: LoggedInUserDTO.toJSON(updatedUser, accessToken),
+      });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const verifyUser = async (
   req: Request<{}, {}, JWTRequestBody>,
   res: TypedResponse<VerifiedUserDTOType>,
   next: NextFunction
 ) => {
-  const tokenPayload = req.tokenPayload as EmailTokenPayload;
+  const tokenPayload = req.validated!.tokenPayload as EmailTokenPayload;
 
   try {
     const verifiedUser = await verifyUserService(tokenPayload);
@@ -95,55 +126,22 @@ export const resendVerificationEmail = async (
   }
 };
 
-export const login = async (
-  req: Request<{}, {}, LoginRequestBody>,
-  res: TypedResponse<LoggedInUserDTOType>,
-  next: NextFunction
-) => {
-  const { identifier, password } = req.validated!.body as LoginRequestBody;
-
-  try {
-    const { updatedUser, accessToken, refreshToken } = await loginService(
-      identifier,
-      password
-    );
-
-    res
-      .status(200)
-      .cookie(ENV.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-        httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES) * 60 * 1000,
-      })
-      .json({
-        success: true,
-        message: "User logged in successfully.",
-        data: LoggedInUserDTO.toJSON(updatedUser, accessToken),
-      });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const logout = async (
-  req: Request,
+export const resetPassword = async (
+  req: Request<{}, {}, ResetPasswordRequestBody>,
   res: TypedResponse<{}>,
   next: NextFunction
 ) => {
-  const user = req.user!;
+  const tokenPayload = req.validated!.tokenPayload as EmailTokenPayload;
+  const { password } = req.validated!.body as ResetPasswordRequestBody;
 
   try {
-    await logoutService(user);
+    await resetPasswordService(tokenPayload, password);
 
-    res
-      .status(204)
-      .clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME, {
-        httpOnly: true,
-        secure: ENV.NODE_ENV === "production",
-        sameSite: "strict",
-      })
-      .end();
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully.",
+      data: {},
+    });
   } catch (error) {
     next(error);
   }
@@ -170,33 +168,12 @@ export const sendResetPasswordEmail = async (
   }
 };
 
-export const resetPassword = async (
-  req: Request<JWTRequestBody, {}, ResetPasswordRequestBody>,
-  res: TypedResponse<{}>,
-  next: NextFunction
-) => {
-  const tokenPayload = req.tokenPayload as EmailTokenPayload;
-  const { password } = req.validated!.body as ResetPasswordRequestBody;
-
-  try {
-    await resetPasswordService(tokenPayload, password);
-
-    res.status(200).json({
-      success: true,
-      message: "Password reset successfully.",
-      data: {},
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const refreshUserAccessToken = async (
   req: Request,
   res: TypedResponse<RefreshedUserAccessTokenDTOType>,
   next: NextFunction
 ) => {
-  const user = req.user!;
+  const user = req.validated!.user!;
 
   try {
     const { updatedUser, accessToken, refreshToken } =
@@ -215,6 +192,29 @@ export const refreshUserAccessToken = async (
         message: "Access token refreshed successfully.",
         data: RefreshedUserAccessTokenDTO.toJSON(updatedUser, accessToken),
       });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (
+  req: Request,
+  res: TypedResponse<{}>,
+  next: NextFunction
+) => {
+  const user = req.validated!.user!;
+
+  try {
+    await logoutService(user);
+
+    res
+      .status(204)
+      .clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME, {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .end();
   } catch (error) {
     next(error);
   }

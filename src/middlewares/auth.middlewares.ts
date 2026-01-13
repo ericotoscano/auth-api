@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../config/CustomError";
 import { findUserService } from "../services/user.services.ts";
-import { TokenTypes } from "../types/token.types.ts";
+import { EmailTokenPayload, TokenTypes } from "../types/token.types.ts";
 import {
   checkToken,
   getTokenFromRequest,
@@ -30,7 +30,11 @@ export const validateToken =
       switch (type) {
         case "verification":
         case "resetPassword": {
-          req.tokenPayload = payload;
+          req.validated ??= {};
+          req.validated.tokenPayload = {
+            ...(payload as EmailTokenPayload),
+            rawToken: tokenToValidate,
+          };
           break;
         }
 
@@ -38,8 +42,9 @@ export const validateToken =
           try {
             const user = await findUserService({ _id: payload.id });
 
-            req.tokenPayload = payload;
-            req.user = user;
+            req.validated ??= {};
+            req.validated.tokenPayload = payload;
+            req.validated.user = user;
           } catch (err) {
             if (err instanceof NotFoundError) {
               throwInvalidTokenError(type);
@@ -67,8 +72,9 @@ export const validateToken =
               throwInvalidTokenError(type);
             }
 
-            req.tokenPayload = payload;
-            req.user = user;
+            req.validated ??= {};
+            req.validated.tokenPayload = payload;
+            req.validated.user = user;
           } catch (err) {
             if (err instanceof NotFoundError) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);

@@ -7,7 +7,7 @@ export const validateUserSelfPermission = async (
   next: NextFunction
 ) => {
   try {
-    if (!req.user) {
+    if (!req.validated!.user) {
       throw new UnauthorizedError(
         "Unauthorized",
         "Authentication is required to perform this action.",
@@ -15,7 +15,7 @@ export const validateUserSelfPermission = async (
       );
     }
 
-    const authenticatedUserId = req.user._id;
+    const authenticatedUserId = req.validated!.user._id;
 
     const { id: targetUserId } = req.validated!.params as { id: string };
 

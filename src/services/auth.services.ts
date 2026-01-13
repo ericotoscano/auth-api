@@ -12,12 +12,11 @@ import {
   UnauthorizedError,
 } from "../config/CustomError";
 import { UserAndTokenServiceReturn } from "../types/auth/services.types";
-import { UserType } from "../types/user/user.type";
-import { ENV } from "../utils/env.utils";
 import { EmailTokenPayload } from "../types/token.types";
 import { SignUpRequestBody } from "../types/auth/request.types";
 import { createToken, throwInvalidTokenError } from "../utils/token.utils";
-import { SignUpServiceReturn } from "../types/user/services.types";
+import { SignUpServiceReturn } from "../types/users/services.types";
+import { UserType } from "../types/users/users.types";
 
 export const signUpService = async (
   signUpBody: SignUpRequestBody
@@ -30,108 +29,6 @@ export const signUpService = async (
   });
 
   return { createdUser, emailSent };
-};
-
-export const verifyUserService = async (
-  tokenPayload: EmailTokenPayload
-): Promise<UserType> => {
-  let user: UserType;
-  let verifiedUser: UserType;
-
-  try {
-    user = await findUserService({ username: tokenPayload.username });
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throwInvalidTokenError("verification");
-    }
-
-    throw error;
-  }
-
-  if (user.isVerified) {
-    throw new ConflictError(
-      "User Verification Conflict",
-      "The user has already been verified. You can log in normally.",
-      "USER_CONFLICT"
-    );
-  }
-
-  try {
-    verifiedUser = await updateUserByIdService(user._id, {
-      set: { isVerified: true },
-      unset: ["verificationToken"],
-    });
-  } catch (error) {
-    throw new InternalServerError(
-      "User Verification Failed",
-      "An unexpected error occurred while verifying the user.",
-      "USER_UPDATE_FAILED"
-    );
-  }
-
-  return verifiedUser;
-};
-
-export const resendVerificationEmailService = async (
-  email: string
-): Promise<void> => {
-  let user: UserType;
-
-  try {
-    user = await findUserService({ email });
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      return;
-    }
-
-    throw error;
-  }
-
-  if (user.isVerified) {
-    throw new ConflictError(
-      "User Verification Conflict",
-      "The user has already been verified. You can log in normally.",
-      "USER_CONFLICT",
-      { isVerified: user.isVerified }
-    );
-  }
-
-  const verificationToken = createToken(
-    { username: user.username },
-    {
-      secret: ENV.VERIFICATION_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.RESET_PASSWORD_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:verification",
-      issuer: "urn:system:token-issuer:type:verification",
-    }
-  );
-
-  try {
-    await updateUserByIdService(user._id, { set: { verificationToken } });
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new NotFoundError(
-        "User Not Found",
-        "The user could not be found during resend verification email.",
-        "USER_NOT_FOUND"
-      );
-    }
-
-    throw error;
-  }
-
-  const emailSent = await sendEmailService("verification", {
-    email: user.email,
-    token: verificationToken,
-  });
-
-  if (!emailSent) {
-    throw new InternalServerError(
-      "Email Not Sent",
-      "Failed to resend the verification email. Please try again later.",
-      "EMAIL_SEND_FAILED"
-    );
-  }
 };
 
 export const loginService = async (
@@ -179,23 +76,9 @@ export const loginService = async (
 
   const accessToken = createToken(
     { id: user._id, username: user.username, email: user.email },
-    {
-      secret: ENV.ACCESS_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.ACCESS_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:access",
-      issuer: "urn:system:token-issuer:type:access",
-    }
+    "access"
   );
-
-  const refreshToken = createToken(
-    { id: user._id },
-    {
-      secret: ENV.REFRESH_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:refresh",
-      issuer: "urn:system:token-issuer:type:refresh",
-    }
-  );
+  const refreshToken = createToken({ id: user._id }, "refresh");
 
   try {
     updatedUser = await updateUserByIdService(user._id, {
@@ -216,18 +99,144 @@ export const loginService = async (
   return { updatedUser, accessToken, refreshToken };
 };
 
-export const logoutService = async (user: UserType): Promise<void> => {
-  const { _id } = user;
+export const verifyUserService = async (
+  tokenPayload: EmailTokenPayload
+): Promise<UserType> => {
+  let user: UserType;
 
   try {
-    await updateUserByIdService(_id, { unset: ["refreshToken"] });
+    user = await findUserService(
+      { username: tokenPayload.username },
+      "+verificationToken"
+    );
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      throwInvalidTokenError("verification");
+    }
+    throw error;
+  }
+
+  // 🔐 VALIDAÇÃO DO TOKEN ATIVO (SEM HASH)
+  if (
+    !user.verificationToken ||
+    user.verificationToken !== tokenPayload.rawToken
+  ) {
+    throwInvalidTokenError("verification");
+  }
+
+  if (user.isVerified) {
+    throw new ConflictError(
+      "User Verification Conflict",
+      "The user has already been verified. You can log in normally.",
+      "USER_CONFLICT"
+    );
+  }
+
+  try {
+    const verifiedUser = await updateUserByIdService(user._id, {
+      set: { isVerified: true },
+      unset: ["verificationToken"],
+    });
+
+    return verifiedUser;
+  } catch {
     throw new InternalServerError(
-      "User Update Failed",
-      "An unexpected error occurred while updating the user session.",
+      "User Verification Failed",
+      "An unexpected error occurred while verifying the user.",
       "USER_UPDATE_FAILED"
     );
   }
+};
+
+export const resendVerificationEmailService = async (
+  email: string
+): Promise<void> => {
+  let user: UserType;
+
+  try {
+    user = await findUserService({ email });
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return;
+    }
+
+    throw error;
+  }
+
+  if (user.isVerified) {
+    throw new ConflictError(
+      "User Verification Conflict",
+      "The user has already been verified. You can log in normally.",
+      "USER_CONFLICT",
+      { isVerified: user.isVerified }
+    );
+  }
+
+  const verificationToken = createToken(
+    { username: user.username },
+    "verification"
+  );
+
+  try {
+    await updateUserByIdService(user._id, { set: { verificationToken } });
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw new NotFoundError(
+        "User Not Found",
+        "The user could not be found during resend verification email.",
+        "USER_NOT_FOUND"
+      );
+    }
+
+    throw error;
+  }
+
+  const emailSent = await sendEmailService("verification", {
+    email: user.email,
+    token: verificationToken,
+  });
+
+  if (!emailSent) {
+    throw new InternalServerError(
+      "Email Not Sent",
+      "Failed to resend the verification email. Please try again later.",
+      "EMAIL_SEND_FAILED"
+    );
+  }
+};
+
+export const resetPasswordService = async (
+  tokenPayload: EmailTokenPayload,
+  password: string
+): Promise<void> => {
+  const user = await findUserService(
+    { username: tokenPayload.username },
+    "+resetPasswordToken"
+  );
+
+  if (
+    !user.resetPasswordToken ||
+    !(await bcrypt.compare(tokenPayload.rawToken!, user.resetPasswordToken))
+  ) {
+    throw new UnauthorizedError(
+      "Invalid Reset Token",
+      "The reset password token is invalid or has expired.",
+      "AUTH_INVALID_TOKEN"
+    );
+  }
+
+  if (!user.isVerified) {
+    throw new UnauthorizedError(
+      "User Not Verified",
+      "This account must be verified before resetting the password.",
+      "AUTH_USER_NOT_VERIFIED"
+    );
+  }
+
+  await updateUserByIdService(user._id, {
+    set: { password },
+    unset: ["resetPasswordToken"],
+  });
 };
 
 export const sendResetPasswordEmailService = async (
@@ -245,14 +254,13 @@ export const sendResetPasswordEmailService = async (
     throw error;
   }
 
+  if (!user.isVerified) {
+    return;
+  }
+
   const resetPasswordToken = createToken(
     { username: user.username },
-    {
-      secret: ENV.RESET_PASSWORD_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.RESET_PASSWORD_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:reset-password",
-      issuer: "urn:system:token-issuer:type:reset-password",
-    }
+    "resetPassword"
   );
 
   try {
@@ -279,48 +287,6 @@ export const sendResetPasswordEmailService = async (
   }
 };
 
-export const resetPasswordService = async (
-  tokenPayload: EmailTokenPayload,
-  password: string
-): Promise<void> => {
-  let user: UserType;
-
-  try {
-    user = await findUserService({ username: tokenPayload.username });
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw new UnauthorizedError(
-        "Invalid Reset Token",
-        "The reset password token is invalid or has expired.",
-        "AUTH_INVALID_TOKEN"
-      );
-    }
-
-    throw error;
-  }
-
-  if (!user.isVerified) {
-    throw new UnauthorizedError(
-      "User Not Verified",
-      "This account must be verified before resetting the password.",
-      "AUTH_USER_NOT_VERIFIED"
-    );
-  }
-
-  try {
-    await updateUserByIdService(user._id, {
-      set: { password },
-      unset: ["resetPasswordToken"],
-    });
-  } catch (error) {
-    throw new InternalServerError(
-      "Password Reset Failed",
-      "An unexpected error occurred while resetting the password.",
-      "USER_UPDATE_FAILED"
-    );
-  }
-};
-
 export const refreshUserAccessTokenService = async (
   user: UserType
 ): Promise<UserAndTokenServiceReturn> => {
@@ -328,22 +294,9 @@ export const refreshUserAccessTokenService = async (
 
   const accessToken = createToken(
     { _id: user._id, username: user.username, email: user.email },
-    {
-      secret: ENV.ACCESS_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.ACCESS_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:access",
-      issuer: "urn:system:token-issuer:type:access",
-    }
+    "access"
   );
-  const refreshToken = createToken(
-    { id: user._id },
-    {
-      secret: ENV.REFRESH_TOKEN_SECRET_KEY,
-      expiresInMinutes: Number(ENV.REFRESH_TOKEN_DURATION_MINUTES),
-      audience: "urn:jwt:type:refresh",
-      issuer: "urn:system:token-issuer:type:refresh",
-    }
-  );
+  const refreshToken = createToken({ id: user._id }, "refresh");
 
   try {
     updatedUser = await updateUserByIdService(user._id, {
@@ -358,4 +311,18 @@ export const refreshUserAccessTokenService = async (
   }
 
   return { updatedUser, accessToken, refreshToken };
+};
+
+export const logoutService = async (user: UserType): Promise<void> => {
+  const { _id } = user;
+
+  try {
+    await updateUserByIdService(_id, { unset: ["refreshToken"] });
+  } catch (error) {
+    throw new InternalServerError(
+      "User Update Failed",
+      "An unexpected error occurred while updating the user session.",
+      "USER_UPDATE_FAILED"
+    );
+  }
 };

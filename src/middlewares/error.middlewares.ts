@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../config/CustomError";
 import { logger } from "../utils/logger";
-import { errorCodes } from "../types/error.types";
+import { errorCodes, errorLevel } from "../types/error.types";
 
 export const appErrorHandler = (
   err: any,
@@ -39,18 +39,15 @@ export const appErrorHandler = (
       : baseResponse;
 
   const logLevel =
-    err instanceof CustomError && errorCodes.includes(err.errorCode)
-      ? "warn"
-      : "error";
+    err instanceof CustomError ? errorLevel[err.errorCode] ?? "error" : "error";
 
-  logger.error(errorResponse.message || "Unexpected Error", {
-    errorCode: errorResponse.errorCode || "UNEXPECTED_ERROR",
+  logger[logLevel](errorResponse.message, {
+    errorCode: errorResponse.errorCode,
     details: err instanceof CustomError ? err.details : undefined,
-    stack: err.stack,
+    stack: logLevel === "error" ? err.stack : undefined,
     method: req.method,
     path: req.originalUrl.split("?")[0],
     ip: req.ip,
-    userAgent: req.headers["user-agent"],
   });
 
   return res.status(err?.statusCode ?? 500).json(errorResponse);

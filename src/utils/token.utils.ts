@@ -2,33 +2,42 @@ import type { Request } from "express";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError, InternalServerError } from "../config/CustomError";
 import { ENV } from "./env.utils";
-import { TokenTypes, TokenPayload } from "../types/token.types";
-import { TokenOptions } from "../types/user/services.types";
+import { TokenTypes, TokenPayload, TokenOptions } from "../types/token.types";
 
-const tokenSecrets: Record<TokenTypes, string> = {
-  verification: ENV.VERIFICATION_TOKEN_SECRET_KEY,
-  resetPassword: ENV.RESET_PASSWORD_TOKEN_SECRET_KEY,
-  access: ENV.ACCESS_TOKEN_SECRET_KEY,
-  refresh: ENV.REFRESH_TOKEN_SECRET_KEY,
+const tokenMessageByType = {
+  verification: "VERIFICATION_TOKEN",
+  resetPassword: "RESET_PASSWORD_TOKEN",
+  access: "ACCESS_TOKEN",
+  refresh: "REFRESH_TOKEN",
+} as const;
+
+const getTokenOptionsByType = (type: TokenTypes): TokenOptions => {
+  return {
+    secret: ENV[`${tokenMessageByType[type]}_SECRET_KEY`],
+    expiresInMinutes: Number(
+      ENV[`${tokenMessageByType[type]}_DURATION_MINUTES`]
+    ),
+    audience: `urn:jwt:type:${type}`,
+    issuer: `urn:system:token-issuer:type:${type}`,
+  };
 };
 
 export const getTokenFromRequest: Record<
   TokenTypes,
   (req: Request) => string | undefined
 > = {
-  verification: (req) =>
-    (req.validated?.body as { token: string } | undefined)?.token,
-  resetPassword: (req) =>
-    (req.validated?.body as { token: string } | undefined)?.token,
+  verification: (req) => (req.body as { token: string } | undefined)?.token,
+  resetPassword: (req) => req.headers.authorization?.replace("Bearer ", ""),
   access: (req) => req.headers.authorization?.replace("Bearer ", ""),
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],
 } as const;
 
 export const createToken = (
   payload: TokenPayload,
-  options: TokenOptions
+  type: TokenTypes
 ): string => {
-  const { secret, expiresInMinutes, audience, issuer } = options;
+  const { secret, expiresInMinutes, audience, issuer } =
+    getTokenOptionsByType(type);
 
   return jwt.sign(payload, secret, {
     expiresIn: expiresInMinutes * 60,
@@ -42,7 +51,7 @@ export const checkToken = async (
   token: string
 ): Promise<TokenPayload> => {
   try {
-    const secret = tokenSecrets[type];
+    const { secret } = getTokenOptionsByType(type);
 
     return jwt.verify(token, secret) as TokenPayload;
   } catch (error: unknown) {

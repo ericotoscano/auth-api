@@ -8,13 +8,13 @@ import {
 import {
   UserIdRequest,
   UpdateUserRequestBody,
-} from "../types/user/request.types";
+} from "../types/users/request.types";
 import {
   FindAllUsersDTO,
   FindUserByIdDTO,
   UpdateUserByIdDTO,
 } from "../dtos/user.dto";
-import { FindAllUsersQueryRequest } from "../types/user/services.types";
+import { FindAllUsersQueryRequest } from "../types/users/services.types";
 import { TypedResponse } from "../types/response.types";
 import {
   FindAllUsersDTOType,

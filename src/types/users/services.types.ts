@@ -1,5 +1,5 @@
 import { PaginationType } from "../pagination.types";
-import { UserType } from "./user.type";
+import { UserType } from "./users.types";
 
 export type SignUpServiceReturn = { createdUser: UserType; emailSent: boolean };
 
@@ -45,10 +45,3 @@ export type UpdateUserFields = Partial<
     | "lastLogin"
   >
 >;
-
-export interface TokenOptions {
-  secret: string;
-  expiresInMinutes: number;
-  audience?: string;
-  issuer?: string;
-}

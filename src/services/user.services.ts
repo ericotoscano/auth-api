@@ -5,7 +5,7 @@ import {
   FindAllUsersQueryRequest,
   FindUserFilter,
   UpdateUserOptions,
-} from "../types/user/services.types";
+} from "../types/users/services.types";
 import {
   BadRequestError,
   ConflictError,
@@ -13,8 +13,6 @@ import {
   InternalServerError,
   NotFoundError,
 } from "../config/CustomError";
-import { UserType } from "../types/user/user.type";
-import { ENV } from "../utils/env.utils";
 import { SignUpRequestBody } from "../types/auth/request.types";
 import {
   buildQueryFields,
@@ -24,6 +22,7 @@ import {
   buildUpdateQuery,
 } from "../utils/builders.utils";
 import { createToken } from "../utils/token.utils";
+import { UserType } from "../types/users/users.types";
 
 export const createUserService = async (
   signUpBody: SignUpRequestBody
@@ -31,15 +30,7 @@ export const createUserService = async (
   const { firstName, lastName, username, email, password } = signUpBody;
 
   try {
-    const verificationToken = createToken(
-      { username },
-      {
-        secret: ENV.VERIFICATION_TOKEN_SECRET_KEY,
-        expiresInMinutes: Number(ENV.VERIFICATION_TOKEN_DURATION_MINUTES),
-        audience: "urn:jwt:type:verification",
-        issuer: "urn:system:token-issuer:type:verification",
-      }
-    );
+    const verificationToken = createToken({ username }, "verification");
 
     const createdUser = await User.create({
       firstName,

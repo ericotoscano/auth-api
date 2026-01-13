@@ -5,7 +5,7 @@ import {
   AllowedUsersFieldsParams,
   allowedUsersSortParams,
   AllowedUsersSortParams,
-} from "../types/user/constants.types";
+} from "../types/users/constants.types";
 import { signUpBaseSchema } from "./auth.schemas";
 
 export const isAllowedParams = <T extends readonly string[]>(

@@ -1,4 +1,4 @@
-import { UserType } from "../user/user.type";
+import { UserType } from "../users/users.types";
 
 export type EmailServiceReturn = { emailSent: boolean };
 
