@@ -1,11 +1,11 @@
 import { mongoose } from "../utils/db.utils";
-import User from "../models/user.model";
+import User from "../models/users.model";
 import {
   FindAllUsersReturn,
   FindAllUsersQueryRequest,
   FindUserFilter,
   UpdateUserOptions,
-} from "../types/users/services.types";
+} from "../types/users/users.services.types";
 import {
   BadRequestError,
   ConflictError,
@@ -13,7 +13,7 @@ import {
   InternalServerError,
   NotFoundError,
 } from "../config/CustomError";
-import { SignUpRequestBody } from "../types/auth/request.types";
+import { SignUpRequestBody } from "../types/auth/auth.request.types";
 import {
   buildQueryFields,
   buildQueryFilters,
@@ -21,7 +21,6 @@ import {
   buildPagination,
   buildUpdateQuery,
 } from "../utils/builders.utils";
-import { createToken } from "../utils/token.utils";
 import { UserType } from "../types/users/users.types";
 
 export const createUserService = async (
@@ -30,15 +29,12 @@ export const createUserService = async (
   const { firstName, lastName, username, email, password } = signUpBody;
 
   try {
-    const verificationToken = createToken({ username }, "verification");
-
     const createdUser = await User.create({
       firstName,
       lastName,
       username,
       email,
       password,
-      verificationToken,
     });
 
     return createdUser;

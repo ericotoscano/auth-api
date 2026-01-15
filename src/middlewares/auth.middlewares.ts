@@ -1,8 +1,11 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../config/CustomError";
-import { findUserService } from "../services/user.services.ts";
-import { EmailTokenPayload, TokenTypes } from "../types/token.types.ts";
+import { findUserService } from "../services/users.services.ts";
+import {
+  EmailTokenPayload,
+  TokenTypes,
+} from "../types/auth/auth.token.types.ts";
 import {
   checkToken,
   getTokenFromRequest,

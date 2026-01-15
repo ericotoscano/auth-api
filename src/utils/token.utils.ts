@@ -2,7 +2,11 @@ import type { Request } from "express";
 import jwt from "jsonwebtoken";
 import { UnauthorizedError, InternalServerError } from "../config/CustomError";
 import { ENV } from "./env.utils";
-import { TokenTypes, TokenPayload, TokenOptions } from "../types/token.types";
+import {
+  TokenTypes,
+  TokenPayload,
+  TokenOptions,
+} from "../types/auth/auth.token.types";
 
 const tokenMessageByType = {
   verification: "VERIFICATION_TOKEN",
@@ -26,7 +30,7 @@ export const getTokenFromRequest: Record<
   TokenTypes,
   (req: Request) => string | undefined
 > = {
-  verification: (req) => (req.body as { token: string } | undefined)?.token,
+  verification: (req) => req.body?.token,
   resetPassword: (req) => req.headers.authorization?.replace("Bearer ", ""),
   access: (req) => req.headers.authorization?.replace("Bearer ", ""),
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],

@@ -1,6 +1,6 @@
 import { UserType } from "../user/user.type";
 import { TournamentType } from "../tournament/tournament.type";
-import { TokenPayload } from "../token.types";
+import { TokenPayload } from "../auth/auth.token.types";
 
 declare global {
   namespace Express {

@@ -16,20 +16,14 @@ import {
   signUpSchema,
 } from "../schemas/auth.schemas";
 import { validateToken } from "../middlewares/auth.middlewares";
-import { jwtSchema, refreshTokenSchema } from "../schemas/token.schemas";
-import { userEmailSchema } from "../schemas/user.schemas";
+import { userEmailSchema } from "../schemas/users.schemas";
 
 const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
 router.post("/login", validateSchema(loginSchema, "body"), login);
-//ver aqui a historia de inverter os middlewares (verificar o token antes de validar o schema)
-router.post(
-  "/verify",
-  validateSchema(jwtSchema, "body"),
-  validateToken("verification"),
-  verifyUser
-);
+
+router.post("/verify", validateToken("verification"), verifyUser);
 router.post(
   "/verification/resend",
   validateSchema(userEmailSchema, "body"),
@@ -48,17 +42,7 @@ router.post(
   sendResetPasswordEmail
 );
 
-router.post(
-  "/token/refresh",
-  validateSchema(refreshTokenSchema, "cookies"),
-  validateToken("refresh"),
-  refreshUserAccessToken
-);
-router.post(
-  "/logout",
-  validateSchema(refreshTokenSchema, "cookies"),
-  validateToken("refresh"),
-  logout
-);
+router.post("/token/refresh", validateToken("refresh"), refreshUserAccessToken);
+router.post("/logout", validateToken("refresh"), logout);
 
 export default router;

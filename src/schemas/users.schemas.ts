@@ -5,7 +5,7 @@ import {
   AllowedUsersFieldsParams,
   allowedUsersSortParams,
   AllowedUsersSortParams,
-} from "../types/users/constants.types";
+} from "../types/users/users.constants.types";
 import { signUpBaseSchema } from "./auth.schemas";
 
 export const isAllowedParams = <T extends readonly string[]>(
@@ -48,7 +48,7 @@ export const findAllUsersSchema = z
         (data) => {
           if (!data) return true;
           const fieldsParams = data.split(",");
-          
+
           return fieldsParams.every((field) =>
             isAllowedParams(field, allowedUsersFieldsParams)
           );

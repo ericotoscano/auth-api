@@ -2,10 +2,12 @@ import {
   FindAllUsersDTOType,
   FindUserByIdDTOType,
   UpdateUserByIdDTOType,
-} from "../types/dto.types";
-import { PaginationType } from "../types/pagination.types";
-import { UpdateUserFields } from "../types/user/services.types";
-import { UserType } from "../types/user/user.type";
+} from "../types/users/users.dto.types";
+import {
+  PaginationType,
+  UpdateUserFields,
+} from "../types/users/users.services.types";
+import { UserType } from "../types/users/users.types";
 
 export class FindAllUsersDTO {
   static toJSON(

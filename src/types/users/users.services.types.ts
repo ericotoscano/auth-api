@@ -1,7 +1,12 @@
-import { PaginationType } from "../pagination.types";
 import { UserType } from "./users.types";
 
-export type SignUpServiceReturn = { createdUser: UserType; emailSent: boolean };
+export type PaginationType = {
+  total: number;
+  limit: number;
+  offset: number;
+  nextUrl: string | null;
+  previousUrl: string | null;
+};
 
 export type FindAllUsersQueryRequest = {
   fields?: string[];

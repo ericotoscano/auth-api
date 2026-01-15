@@ -1,4 +1,4 @@
-import { EmailPayload, EmailType } from "../types/mail.types.ts";
+import { EmailPayload, EmailType } from "../types/auth/auth.mail.types.ts";
 import { transporter } from "../config/mail.config.ts";
 import { logger } from "../utils/logger.ts";
 import { getEmailOptions } from "../utils/mail.utils.ts";

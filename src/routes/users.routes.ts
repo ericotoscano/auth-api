@@ -5,17 +5,19 @@ import {
   findAllUsers,
   findUserById,
   updateUserById,
-} from "../controllers/user.controller";
-import { findAllUsersSchema, updateUserSchema, userIdSchema } from "../schemas/user.schemas";
+} from "../controllers/users.controller";
+import {
+  findAllUsersSchema,
+  updateUserSchema,
+  userIdSchema,
+} from "../schemas/users.schemas";
 import { validateToken } from "../middlewares/auth.middlewares";
-import { authorizationSchema } from "../schemas/token.schemas";
-import { validateUserSelfPermission } from "../middlewares/user.middlewares";
+import { validateUserSelfPermission } from "../middlewares/users.middlewares";
 
 const router = Router();
 
 router.get(
   "/",
-  validateSchema(authorizationSchema, "headers"),
   validateToken("access"),
   validateSchema(findAllUsersSchema, "query"),
   findAllUsers
@@ -23,11 +25,7 @@ router.get(
 
 router
   .route("/:id")
-  .all(
-    validateSchema(authorizationSchema, "headers"),
-    validateToken("access"),
-    validateSchema(userIdSchema, "params")
-  )
+  .all(validateToken("access"), validateSchema(userIdSchema, "params"))
   .get(findUserById)
   .patch(
     validateUserSelfPermission,

@@ -1,4 +1,4 @@
-import { mongoose } from "../utils/db.utils";
+import { mongoose } from "../utils/db.utils.ts";
 import bcrypt from "bcryptjs";
 import type { UserType } from "../types/users/users.types.ts";
 
@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
     },
     isVerified: { type: Boolean, default: false },
     resetPasswordToken: { type: String, select: false },
-    verificationToken: { type: String, required: true, select: false },
+    verificationToken: { type: String, select: false },
     refreshToken: { type: String, select: false },
     lastLogin: { type: Date },
   },
@@ -63,6 +63,7 @@ userSchema.pre("findOneAndUpdate", async function (next) {
     "password",
     "refreshToken",
     "resetPasswordToken",
+    "verificationToken",
   ];
 
   for (const field of fieldsToHash) {

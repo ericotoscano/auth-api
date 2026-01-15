@@ -3,7 +3,7 @@ import {
   EmailType,
   EmailPayload,
   EmailTemplateParams,
-} from "../types/mail.types";
+} from "../types/auth/auth.mail.types";
 import { ENV } from "./env.utils";
 
 export const buildEmailTemplate = ({

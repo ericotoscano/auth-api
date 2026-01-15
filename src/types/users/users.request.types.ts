@@ -1,5 +1,5 @@
 import z from "zod";
-import { userIdSchema } from "../../schemas/user.schemas";
+import { userIdSchema } from "../../schemas/users.schemas";
 
 export type UserIdRequest = z.infer<typeof userIdSchema>;
 

@@ -3,8 +3,8 @@ import {
   VerifiedUserDTOType,
   LoggedInUserDTOType,
   RefreshedUserAccessTokenDTOType,
-} from "../types/dto.types";
-import { UserType } from "../types/user/user.type";
+} from "../types/users/users.dto.types";
+import { UserType } from "../types/users/users.types";
 
 export class SignedUpUserDTO {
   static toJSON(user: UserType): SignedUpUserDTOType {

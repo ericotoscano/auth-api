@@ -10,7 +10,7 @@ import {
   verifyUserService,
 } from "../services/auth.services";
 import { ENV } from "../utils/env.utils";
-import { EmailTokenPayload } from "../types/token.types";
+import { EmailTokenPayload } from "../types/auth/auth.token.types";
 import { TypedResponse } from "../types/response.types";
 import {
   SignedUpUserDTO,
@@ -23,14 +23,15 @@ import {
   VerifiedUserDTOType,
   LoggedInUserDTOType,
   RefreshedUserAccessTokenDTOType,
-} from "../types/dto.types";
+} from "../types/users/users.dto.types";
 import {
   SignUpRequestBody,
-  JWTRequestBody,
+  VerifyRequestBody,
   ResetPasswordRequestBody,
   EmailRequestBody,
   LoginRequestBody,
-} from "../types/auth/request.types";
+} from "../types/auth/auth.request.types";
+import { UserType } from "../types/users/users.types";
 
 export const signup = async (
   req: Request<{}, {}, SignUpRequestBody>,
@@ -86,7 +87,7 @@ export const login = async (
 };
 
 export const verifyUser = async (
-  req: Request<{}, {}, JWTRequestBody>,
+  req: Request<{}, {}, VerifyRequestBody>,
   res: TypedResponse<VerifiedUserDTOType>,
   next: NextFunction
 ) => {
@@ -173,7 +174,7 @@ export const refreshUserAccessToken = async (
   res: TypedResponse<RefreshedUserAccessTokenDTOType>,
   next: NextFunction
 ) => {
-  const user = req.validated!.user!;
+  const user = req.validated!.user as UserType;
 
   try {
     const { updatedUser, accessToken, refreshToken } =

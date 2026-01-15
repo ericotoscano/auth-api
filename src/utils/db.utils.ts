@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { ENV } from "./env.utils";
-import User from "../models/user.model";
+import User from "../models/users.model";
 import { logger } from "./logger";
 import { InternalServerError } from "../config/CustomError";
 
@@ -93,7 +93,7 @@ export const runInTransaction = async <T>(
     throw error;
   } finally {
     session.endSession();
-  } 
+  }
 };
 
 export { mongoose };

@@ -4,23 +4,23 @@ import {
   findAllUsersService,
   findUserService,
   updateUserByIdService,
-} from "../services/user.services";
+} from "../services/users.services";
 import {
   UserIdRequest,
   UpdateUserRequestBody,
-} from "../types/users/request.types";
+} from "../types/users/users.request.types";
 import {
   FindAllUsersDTO,
   FindUserByIdDTO,
   UpdateUserByIdDTO,
-} from "../dtos/user.dto";
-import { FindAllUsersQueryRequest } from "../types/users/services.types";
+} from "../dtos/users.dto";
+import { FindAllUsersQueryRequest } from "../types/users/users.services.types";
 import { TypedResponse } from "../types/response.types";
 import {
   FindAllUsersDTOType,
   FindUserByIdDTOType,
   UpdateUserByIdDTOType,
-} from "../types/dto.types";
+} from "../types/users/users.dto.types";
 import { buildBaseUrl } from "../utils/builders.utils";
 
 export const findAllUsers = async (

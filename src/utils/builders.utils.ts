@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { SortOrder } from "mongoose";
 import { BadRequestError } from "../config/CustomError";
-import { UpdateUserOptions } from "../types/users/services.types";
+import { UpdateUserOptions } from "../types/users/users.services.types";
 import {
   allowedUsersFieldsParams,
   AllowedUsersFieldsParams,
@@ -12,7 +12,7 @@ import {
   AllowedUsersQuerySort,
   AllowedUsersSortParams,
   allowedUsersSortParams,
-} from "../types/users/constants.types";
+} from "../types/users/users.constants.types";
 import { ENV } from "./env.utils";
 
 const escapeRegex = (string: string): string => {

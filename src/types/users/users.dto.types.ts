@@ -1,4 +1,4 @@
-import { PaginationType } from "./pagination.types";
+import { PaginationType } from "../pagination.types";
 
 export type SignedUpUserDTOType = {
   isVerified: boolean;
