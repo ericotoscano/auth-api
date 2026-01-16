@@ -138,6 +138,7 @@ POST /logout
 
 ## 🗂️ Estrutura do Projeto
 
+```
 src/
 ├── auth/
 │ ├── auth.controller.ts
@@ -157,11 +158,11 @@ src/
 │ ├── validateSchema.ts
 │
 ├── config/
-│ ├── env.ts
+│ ├── mail.config.ts
 │ ├── CustomError.ts
 │
 └── app.ts
-
+```
 ---
 
 ## ⚙️ Variáveis de Ambiente
