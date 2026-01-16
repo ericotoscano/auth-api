@@ -1,8 +1,6 @@
 # 🔐 Auth API
 
-Projeto que implementa um sistema de autenticação completo, com foco em segurança, boas práticas e fluxos reais de aplicação.
-
-Demonstra o uso correto de controle de sessão no backend, rotação de refresh tokens, verificação por email, reset de senha seguro e logout com revogação efetiva.
+Projeto que implementa um sistema de autenticação completo, com foco em segurança, boas práticas e fluxos reais de aplicação. O objetivo é demonstrar o uso correto de controle de sessão no backend, rotação de refresh tokens, verificação por email, reset de senha seguro e logout com revogação efetiva.
 
 ---
 
@@ -166,8 +164,6 @@ src/
 
 ---
 
----
-
 ## ⚙️ Variáveis de Ambiente
 
 ```env
@@ -186,7 +182,7 @@ RESET_PASSWORD_TOKEN_DURATION_MINUTES=15
 REFRESH_TOKEN_COOKIE_NAME=refreshToken
 
 NODE_ENV=development
-
+```
 ---
 
 ## ▶️ Rodando o Projeto
