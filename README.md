@@ -1,6 +1,6 @@
 # 🔐 Auth API
 
-Projeto de portfólio que implementa um sistema de autenticação completo, com foco em segurança, boas práticas e fluxos reais de aplicação.
+Projeto que implementa um sistema de autenticação completo, com foco em segurança, boas práticas e fluxos reais de aplicação.
 
 Demonstra o uso correto de controle de sessão no backend, rotação de refresh tokens, verificação por email, reset de senha seguro e logout com revogação efetiva.
 
