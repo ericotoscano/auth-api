@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { envSchema } from "../schemas/env.schema";
-import { Env } from "../types/env.types";
+import { envSchema } from "../infra/env/env.schema";
+import { Env } from "../infra/env/env.types";
 import { logger } from "./logger";
 
 const parsed = envSchema.safeParse(process.env);

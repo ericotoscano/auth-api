@@ -1,12 +1,8 @@
 import type { Request } from "express";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError, InternalServerError } from "../config/CustomError";
+import { UnauthorizedError, InternalServerError } from "../errors/custom-error";
 import { ENV } from "./env.utils";
-import {
-  TokenTypes,
-  TokenPayload,
-  TokenOptions,
-} from "../types/auth/auth.token.types";
+import { TokenTypes, TokenOptions, TokenPayload } from "../auth/types/token.types";
 
 const tokenMessageByType = {
   verification: "VERIFICATION_TOKEN",
@@ -19,7 +15,7 @@ const getTokenOptionsByType = (type: TokenTypes): TokenOptions => {
   return {
     secret: ENV[`${tokenMessageByType[type]}_SECRET_KEY`],
     expiresInMinutes: Number(
-      ENV[`${tokenMessageByType[type]}_DURATION_MINUTES`]
+      ENV[`${tokenMessageByType[type]}_DURATION_MINUTES`],
     ),
     audience: `urn:jwt:type:${type}`,
     issuer: `urn:system:token-issuer:type:${type}`,
@@ -38,7 +34,7 @@ export const getTokenFromRequest: Record<
 
 export const createToken = (
   payload: TokenPayload,
-  type: TokenTypes
+  type: TokenTypes,
 ): string => {
   const { secret, expiresInMinutes, audience, issuer } =
     getTokenOptionsByType(type);
@@ -52,7 +48,7 @@ export const createToken = (
 
 export const checkToken = async (
   type: TokenTypes,
-  token: string
+  token: string,
 ): Promise<TokenPayload> => {
   try {
     const { secret } = getTokenOptionsByType(type);
@@ -64,7 +60,7 @@ export const checkToken = async (
         "Expired Token",
         "The token has expired. Please request a new one.",
         "AUTH_EXPIRED_TOKEN",
-        { type }
+        { type },
       );
     }
     if (error instanceof jwt.NotBeforeError) {
@@ -72,7 +68,7 @@ export const checkToken = async (
         "Inactive Token",
         "The token is not active yet.",
         "AUTH_INACTIVE_TOKEN",
-        { type }
+        { type },
       );
     }
     if (error instanceof jwt.JsonWebTokenError) {
@@ -83,7 +79,7 @@ export const checkToken = async (
       "Token Validation Failed",
       "An unexpected error occurred while validating the token.",
       "SYSTEM_TOKEN_VALIDATION_FAILED",
-      { type }
+      { type },
     );
   }
 };
@@ -93,6 +89,6 @@ export const throwInvalidTokenError = (type: TokenTypes) => {
     "Invalid Token",
     "The token is invalid.",
     "AUTH_INVALID_TOKEN",
-    { type }
+    { type },
   );
 };

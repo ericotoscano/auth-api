@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { ENV } from "./env.utils";
-import User from "../models/users.model";
+import User from "../users/model";
 import { logger } from "./logger";
-import { InternalServerError } from "../config/CustomError";
+import { InternalServerError } from "../errors/custom-error";
 
 export const connectToDB = async () => {
   try {
@@ -16,7 +16,7 @@ export const connectToDB = async () => {
       throw new InternalServerError(
         "Database Configuration Error",
         `Database URI is not defined for environment: ${ENV.NODE_ENV}`,
-        "SYSTEM_UNEXPECTED"
+        "SYSTEM_UNEXPECTED",
       );
 
     const mongoDB = await mongoose.connect(mongoUri, {
@@ -27,7 +27,7 @@ export const connectToDB = async () => {
     await User.init();
 
     logger.info(
-      `Connected to DB (${ENV.NODE_ENV}): ${mongoDB.connection.host}`
+      `Connected to DB (${ENV.NODE_ENV}): ${mongoDB.connection.host}`,
     );
   } catch (error: any) {
     logger.error("Failed to connect to database", {
@@ -39,7 +39,7 @@ export const connectToDB = async () => {
     throw new InternalServerError(
       "Database Connection Failed",
       "Failed to connect to the database. Please try again later.",
-      "SYSTEM_UNEXPECTED"
+      "SYSTEM_UNEXPECTED",
     );
   }
 };
@@ -74,7 +74,7 @@ export const clearDatabase = async () => {
 };
 
 export const runInTransaction = async <T>(
-  fn: (session: mongoose.ClientSession) => Promise<T>
+  fn: (session: mongoose.ClientSession) => Promise<T>,
 ): Promise<T> => {
   const session = await mongoose.startSession();
   session.startTransaction();

@@ -2,7 +2,7 @@ import {
   allowedSignupSchemaFields,
   validSignupSchema,
 } from "./signup.schema.fixtures";
-import { signUpSchema } from "../../../schemas/auth.schemas";
+import { signUpSchema } from "../../../auth/schemas";
 
 describe("Signup Schema Validation", () => {
   describe("Valid Data", () => {
@@ -57,7 +57,7 @@ describe("Signup Schema Validation", () => {
         const issue = result.success ? null : result.error.issues[0];
 
         expect(issue?.message).toStrictEqual(
-          `${field} must be at least 2 characters long.`
+          `${field} must be at least 2 characters long.`,
         );
       });
     }
@@ -72,7 +72,7 @@ describe("Signup Schema Validation", () => {
       const issue = result.success ? null : result.error.issues[0];
 
       expect(issue?.message).toStrictEqual(
-        "username must be at least 3 characters long."
+        "username must be at least 3 characters long.",
       );
     });
 
@@ -86,7 +86,7 @@ describe("Signup Schema Validation", () => {
       const issue = result.success ? null : result.error.issues[0];
 
       expect(issue?.message).toStrictEqual(
-        "password must be at least 8 characters long."
+        "password must be at least 8 characters long.",
       );
     });
 
@@ -115,7 +115,7 @@ describe("Signup Schema Validation", () => {
         const issue = result.success ? null : result.error.issues[0];
 
         expect(issue?.message).toStrictEqual(
-          `${field} must be no longer than 20 characters.`
+          `${field} must be no longer than 20 characters.`,
         );
       });
     }
@@ -130,7 +130,7 @@ describe("Signup Schema Validation", () => {
       const issue = result.success ? null : result.error.issues[0];
 
       expect(issue?.message).toStrictEqual(
-        "username must be no longer than 8 characters."
+        "username must be no longer than 8 characters.",
       );
     });
 
@@ -144,7 +144,7 @@ describe("Signup Schema Validation", () => {
       const issue = result.success ? null : result.error.issues[0];
 
       expect(issue?.message).toStrictEqual(
-        "password must be no longer than 15 characters."
+        "password must be no longer than 15 characters.",
       );
     });
   });

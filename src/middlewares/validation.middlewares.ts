@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { ZodError, type ZodSchema } from "zod";
-import { BadRequestError } from "../config/CustomError";
+import { BadRequestError } from "../errors/custom-error";
 
 type RequestSection = "body" | "params" | "query" | "headers" | "cookies";
 
@@ -32,8 +32,8 @@ export const validateSchema =
             "Request Validation Failed",
             "One or more request fields failed validation.",
             "VALIDATION_SCHEMA_FAILED",
-            details
-          )
+            details,
+          ),
         );
       }
 
