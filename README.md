@@ -1,8 +1,8 @@
 # 🔐 Auth API
 
-API de autenticação moderna com **JWT**, **refresh token rotation**, **verificação por email**, **reset de senha seguro** e **logout real no backend**.
+Projeto de portfólio que implementa um sistema de autenticação completo, com foco em segurança, boas práticas e fluxos reais de aplicação.
 
-Projetada com foco em **segurança**, **clareza arquitetural** e **boas práticas de mercado**.
+Demonstra o uso correto de controle de sessão no backend, rotação de refresh tokens, verificação por email, reset de senha seguro e logout com revogação efetiva.
 
 ---
 
