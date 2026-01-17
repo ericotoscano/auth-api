@@ -9,7 +9,7 @@ import {
   signup,
   verifyUser,
 } from "./controller";
-import { validateSchema } from "../middlewares/validation.middlewares";
+import { validateSchema } from "../infra/http/middlewares/validate-schema.middleware";
 import { loginSchema, resetPasswordSchema, signUpSchema } from "./schemas";
 import { validateToken } from "./middlewares";
 import { userEmailSchema } from "../users/schemas";

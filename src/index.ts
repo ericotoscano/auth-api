@@ -1,12 +1,12 @@
 import app from "./app";
-import { ENV } from "./utils/env.utils";
-import { connectToDB, disconnectToDB } from "./utils/db.utils";
-import { logger } from "./utils/logger";
-import http from "http";
+import { connectToDB, disconnectToDB } from "./infra/db/mongoose";
+import { ENV } from "./infra/env/env";
+import { logger } from "./infra/logger/logger";
+import type { Server } from "http";
 
-const API_PORT = Number(ENV.API_PORT);
+const APP_PORT = Number(ENV.APP_PORT);
 
-let server: http.Server;
+let server: Server;
 
 const shutdown = async (signal: string) => {
   logger.info(`Received ${signal}. Shutting down gracefully...`);
@@ -39,8 +39,8 @@ const shutdown = async (signal: string) => {
     if (ENV.NODE_ENV !== "test") {
       await connectToDB();
 
-      server = app.listen(API_PORT, () => {
-        logger.info(`Server is running on ${ENV.APP_ORIGIN}${API_PORT}`);
+      server = app.listen(APP_PORT, () => {
+        logger.info(`Server is running on ${ENV.APP_ORIGIN}`);
       });
 
       process.on("SIGTERM", shutdown);

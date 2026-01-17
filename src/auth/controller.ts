@@ -1,5 +1,4 @@
 import { NextFunction, Request } from "express";
-import { ENV } from "../utils/env.utils";
 import {
   signUpService,
   loginService,
@@ -9,7 +8,7 @@ import {
   sendResetPasswordEmailService,
   refreshUserAccessTokenService,
   logoutService,
-} from "./services";
+} from "./services/auth.services";
 import { TypedResponse } from "../shared/types/response.types";
 import {
   SignedUpUserDTO,
@@ -32,6 +31,7 @@ import {
   VerifiedUserDTOType,
 } from "./types/dto.types";
 import { EmailTokenPayload } from "./types/token.types";
+import { ENV } from "../infra/env/env";
 
 export const signup = async (
   req: Request<{}, {}, SignUpRequestBody>,

@@ -4,29 +4,28 @@ import {
   InternalServerError,
   NotFoundError,
   UnauthorizedError,
-} from "../errors/custom-error";
-import { createToken, throwInvalidTokenError } from "../utils/token.utils";
-
-import { UserType } from "../shared/types/user.types";
+} from "../../errors/custom-error";
+import { createTokenService, throwInvalidTokenError } from "./token.services";
+import { UserType } from "../../shared/types/user.types";
 import {
   createUserService,
   updateUserByIdService,
   findUserService,
-} from "../users/services";
-import { SignUpRequestBody } from "./types/request.types";
+} from "../../users/services";
+import { SignUpRequestBody } from "../types/request.types";
 import {
   SignUpServiceReturn,
   UserAndTokenServiceReturn,
-} from "./types/services.types";
-import { EmailTokenPayload } from "./types/token.types";
-import { sendEmailService } from "../infra/mail/mail.services";
+} from "../types/services.types";
+import { EmailTokenPayload } from "../types/token.types";
+import { sendEmailService } from "../../infra/mail/mail.service";
 
 export const signUpService = async (
   signUpBody: SignUpRequestBody,
 ): Promise<SignUpServiceReturn> => {
   const createdUser = await createUserService(signUpBody);
 
-  const verificationToken = createToken(
+  const verificationToken = createTokenService(
     { username: createdUser.username },
     "verification",
   );
@@ -86,11 +85,11 @@ export const loginService = async (
     );
   }
 
-  const accessToken = createToken(
+  const accessToken = createTokenService(
     { id: user._id, username: user.username, email: user.email },
     "access",
   );
-  const refreshToken = createToken({ id: user._id }, "refresh");
+  const refreshToken = createTokenService({ id: user._id }, "refresh");
 
   try {
     updatedUser = await updateUserByIdService(user._id, {
@@ -183,7 +182,7 @@ export const resendVerificationEmailService = async (
     );
   }
 
-  const verificationToken = createToken(
+  const verificationToken = createTokenService(
     { username: user.username },
     "verification",
   );
@@ -282,7 +281,7 @@ export const sendResetPasswordEmailService = async (
     return;
   }
 
-  const resetPasswordToken = createToken(
+  const resetPasswordToken = createTokenService(
     { username: user.username },
     "resetPassword",
   );
@@ -316,11 +315,11 @@ export const refreshUserAccessTokenService = async (
 ): Promise<UserAndTokenServiceReturn> => {
   let updatedUser: UserType;
 
-  const accessToken = createToken(
+  const accessToken = createTokenService(
     { _id: user._id, username: user.username, email: user.email },
     "access",
   );
-  const refreshToken = createToken({ id: user._id }, "refresh");
+  const refreshToken = createTokenService({ id: user._id }, "refresh");
 
   try {
     updatedUser = await updateUserByIdService(user._id, {

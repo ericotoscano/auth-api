@@ -3,18 +3,19 @@ import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../errors/custom-error.ts";
 import { findUserService } from "../users/services.ts";
 import {
-  checkToken,
-  getTokenFromRequest,
+  checkTokenService,
+  getTokenFromRequestService,
   throwInvalidTokenError,
-} from "../utils/token.utils.ts";
-import { ENV } from "../utils/env.utils.ts";
+} from "./services/token.services.ts";
+
 import { EmailTokenPayload, TokenTypes } from "./types/token.types.ts";
+import { ENV } from "../infra/env/env.ts";
 
 export const validateToken =
   (type: TokenTypes): RequestHandler =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tokenToValidate = getTokenFromRequest[type](req);
+      const tokenToValidate = getTokenFromRequestService[type](req);
 
       if (!tokenToValidate) {
         throw new UnauthorizedError(
@@ -25,7 +26,7 @@ export const validateToken =
         );
       }
 
-      const payload = await checkToken(type, tokenToValidate);
+      const payload = await checkTokenService(type, tokenToValidate);
 
       switch (type) {
         case "verification":

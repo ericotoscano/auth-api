@@ -1,8 +1,11 @@
 import type { Request } from "express";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError, InternalServerError } from "../errors/custom-error";
-import { ENV } from "./env.utils";
-import { TokenTypes, TokenOptions, TokenPayload } from "../auth/types/token.types";
+import {
+  UnauthorizedError,
+  InternalServerError,
+} from "../../errors/custom-error";
+import { TokenTypes, TokenOptions, TokenPayload } from "../types/token.types";
+import { ENV } from "../../infra/env/env";
 
 const tokenMessageByType = {
   verification: "VERIFICATION_TOKEN",
@@ -22,7 +25,7 @@ const getTokenOptionsByType = (type: TokenTypes): TokenOptions => {
   };
 };
 
-export const getTokenFromRequest: Record<
+export const getTokenFromRequestService: Record<
   TokenTypes,
   (req: Request) => string | undefined
 > = {
@@ -32,7 +35,7 @@ export const getTokenFromRequest: Record<
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],
 } as const;
 
-export const createToken = (
+export const createTokenService = (
   payload: TokenPayload,
   type: TokenTypes,
 ): string => {
@@ -46,7 +49,7 @@ export const createToken = (
   });
 };
 
-export const checkToken = async (
+export const checkTokenService = async (
   type: TokenTypes,
   token: string,
 ): Promise<TokenPayload> => {

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { ZodError, type ZodSchema } from "zod";
-import { BadRequestError } from "../errors/custom-error";
+import { BadRequestError } from "../../../errors/custom-error";
 
 type RequestSection = "body" | "params" | "query" | "headers" | "cookies";
 

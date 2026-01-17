@@ -1,4 +1,4 @@
-import { mongoose } from "../utils/db.utils";
+import { mongoose } from "../infra/db/mongoose";
 import User from "./model";
 import {
   BadRequestError,

@@ -1,7 +1,7 @@
-import { EmailPayload, EmailType } from "../types/auth/auth.mail.types.ts";
-import { transporter } from "../config/mail.config.ts";
-import { logger } from "../utils/logger.ts";
-import { getEmailOptions } from "./mail.utils.ts";
+import { logger } from "../logger/logger.ts";
+import { transporter } from "./mail.config.ts";
+import { getEmailOptions } from "./mail.factory.ts";
+import { EmailType, EmailPayload } from "./mail.types.ts";
 
 export const sendEmailService = async (
   type: EmailType,

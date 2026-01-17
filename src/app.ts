@@ -3,14 +3,13 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
-
-import authRoutes from "./routes/auth.routes";
+import authRoutes from "./auth/routes";
 import userRoutes from "./users/routes";
-
 import { appErrorHandler } from "./errors/error-handler";
 import { NotFoundError } from "./errors/custom-error";
-import { requestLogger } from "./middlewares/request.middlewares";
+import { requestLogger } from "./infra/http/middlewares/request-logger.middleware";
 import { fileURLToPath } from "url";
+import { ENV } from "./infra/env/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +19,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: ENV.FRONTEND_ORIGIN, credentials: true }));
 app.use(requestLogger);
 app.use(express.static(path.join(__dirname, "..", "public")));
 
@@ -32,7 +31,7 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
     new NotFoundError(
       "Resource Not Found",
       "Please verify the URL or check if the resource exists.",
-      "SYSTEM_UNEXPECTED",
+      "RESOURCE_NOT_FOUND",
     ),
   );
 });

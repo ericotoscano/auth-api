@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { ENV } from "./env.utils";
-import User from "../users/model";
-import { logger } from "./logger";
-import { InternalServerError } from "../errors/custom-error";
+import User from "../../users/model";
+import { logger } from "../logger/logger";
+import { InternalServerError } from "../../errors/custom-error";
+import { ENV } from "../env/env";
 
 export const connectToDB = async () => {
   try {

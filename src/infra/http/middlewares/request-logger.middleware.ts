@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { logger } from "../utils/logger";
-import { filterInfo } from "../utils/filter.utils";
+import { logger } from "../../logger/logger";
+import { filterInfo } from "../../../shared/utils/filter.utils";
 
 export const requestLogger = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const start = Date.now();
 
@@ -30,7 +30,7 @@ export const requestLogger = (
         "updated_at",
       ]),
       contentLength: res.getHeader("content-length"),
-     });
+    });
   });
 
   next();

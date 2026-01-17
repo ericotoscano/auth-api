@@ -1,4 +1,8 @@
-import { clearDatabase, connectToDB, disconnectToDB } from "../utils/db.utils";
+import {
+  clearDatabase,
+  connectToDB,
+  disconnectToDB,
+} from "../infra/db/mongoose";
 
 beforeAll(async () => {
   await connectToDB();

@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { SortOrder } from "mongoose";
 import { BadRequestError } from "../errors/custom-error";
-import { ENV } from "../utils/env.utils";
+
 import {
   AllowedUsersFiltersParams,
   AllowedUsersFieldsParams,
@@ -14,6 +14,7 @@ import {
   allowedUsersSortParams,
 } from "./constants/user.constants";
 import { UpdateUserOptions } from "./types/services.types";
+import { ENV } from "../infra/env/env";
 
 const escapeRegex = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -36,7 +37,7 @@ const queryMap: Record<
 };
 
 export const buildBaseUrl = <Q>(req: Request<{}, {}, {}, Q>): string => {
-  return `${req.protocol}://${req.get("host") || `localhost:${ENV.API_PORT}`}${
+  return `${req.protocol}://${req.get("host") || `localhost:${ENV.APP_PORT}`}${
     req.baseUrl
   }${req.path}`;
 };

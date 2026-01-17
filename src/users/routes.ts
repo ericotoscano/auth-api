@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validateSchema } from "../middlewares/validation.middlewares";
+import { validateSchema } from "../infra/http/middlewares/validate-schema.middleware";
 import {
   deleteUserById,
   findAllUsers,

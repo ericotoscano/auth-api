@@ -18,6 +18,7 @@ export const errorCodes = {
   EMAIL_SEND_FAILED: "EMAIL_SEND_FAILED",
   SYSTEM_UNEXPECTED: "SYSTEM_UNEXPECTED",
   SYSTEM_TOKEN_VALIDATION_FAILED: "SYSTEM_TOKEN_VALIDATION_FAILED",
+  RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND",
 } as const;
 
 export const errorLevel: Record<ErrorCode, "warn" | "error"> = {
@@ -34,6 +35,7 @@ export const errorLevel: Record<ErrorCode, "warn" | "error"> = {
   INVALID_UPDATE_PAYLOAD: "warn",
   USER_CONFLICT: "warn",
   USER_NOT_FOUND: "warn",
+  RESOURCE_NOT_FOUND: "warn",
   USER_CREATE_FAILED: "error",
   USER_RETRIEVE_FAILED: "error",
   USER_UPDATE_FAILED: "error",

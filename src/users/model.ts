@@ -1,5 +1,5 @@
 import { UserType } from "../shared/types/user.types.ts";
-import { mongoose } from "../utils/db.utils.ts";
+import { mongoose } from "../infra/db/mongoose.ts";
 import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, select: false },
     lastLogin: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {
