@@ -6,23 +6,33 @@ export type TokenTypes =
   | "access"
   | "refresh";
 
-export interface EmailTokenPayload extends JwtPayload {
+export interface EmailTokenClaims extends JwtPayload {
   username: string;
-  rawToken?: string;
 }
-export interface AccessTokenPayload extends JwtPayload {
+
+export interface VerifiedEmailToken extends EmailTokenClaims {
+  rawToken: string;
+}
+export interface AccessTokenClaims extends JwtPayload {
   id: string;
   username: string;
   email: string;
 }
-export interface RefreshTokenPayload extends JwtPayload {
+export interface RefreshTokenClaims extends JwtPayload {
   id: string;
 }
 
-export type TokenPayload =
-  | EmailTokenPayload
-  | AccessTokenPayload
-  | RefreshTokenPayload;
+export type TokenClaims =
+  | EmailTokenClaims
+  | AccessTokenClaims
+  | RefreshTokenClaims;
+
+export type TokenClaimsByType = {
+  verification: EmailTokenClaims;
+  resetPassword: EmailTokenClaims;
+  access: AccessTokenClaims;
+  refresh: RefreshTokenClaims;
+};
 
 export interface TokenOptions {
   secret: string;

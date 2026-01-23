@@ -1,6 +1,6 @@
 import request from "supertest";
 import app from "../app";
-import User from "../users/model";
+import User from "../users/model/user.model";
 import { validSignupSchema } from "./unit/signup/signup.schema.fixtures";
 
 const endpoint = "/api/v1/auth/signup";

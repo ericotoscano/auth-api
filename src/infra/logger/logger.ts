@@ -16,6 +16,7 @@ const prettyOrderedJSON = printf((info) => {
     query: info.query,
     contentLength: info.contentLength,
     errorCode: info.errorCode,
+    originalErrorCode: info.originalErrorCode,
     details: info.details,
     stack: info.stack,
   };
@@ -30,7 +31,7 @@ export const logger = winston.createLogger({
     timestamp({
       format: "YYYY-MM-DD hh:mm:ss A",
     }),
-    json()
+    json(),
   ),
   transports: [
     new winston.transports.Console({

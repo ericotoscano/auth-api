@@ -1,5 +1,5 @@
 import { mongoose } from "../infra/db/mongoose";
-import User from "./model";
+import User from "./model/user.model";
 import {
   BadRequestError,
   ConflictError,
@@ -22,22 +22,30 @@ import {
   FindUserFilter,
   UpdateUserOptions,
 } from "./types/services.types";
+import { mapUserDocumentToUser } from "./mappers";
+import { UserDocument } from "./model/user.document";
 
 export const createUserService = async (
   signUpBody: SignUpRequestBody,
+  session?: mongoose.ClientSession,
 ): Promise<UserType> => {
   const { firstName, lastName, username, email, password } = signUpBody;
 
   try {
-    const createdUser = await User.create({
-      firstName,
-      lastName,
-      username,
-      email,
-      password,
-    });
+    const createdUser = await User.create(
+      [
+        {
+          firstName,
+          lastName,
+          username,
+          email,
+          password,
+        },
+      ],
+      { session },
+    );
 
-    return createdUser;
+    return mapUserDocumentToUser(createdUser[0]);
   } catch (error) {
     if (
       error instanceof mongoose.mongo.MongoServerError &&
@@ -81,7 +89,7 @@ export const findAllUsersService = async (
       .skip(offset)
       .limit(limit);
 
-    const results = documents.map((doc) => doc.toObject());
+    const results = documents.map((doc) => mapUserDocumentToUser(doc));
 
     const total = await User.countDocuments(queryFilters);
 
@@ -112,12 +120,9 @@ export const findAllUsersService = async (
 
 export const findUserService = async (
   filter: FindUserFilter,
-  selectFields?: string,
 ): Promise<UserType> => {
   try {
-    const document = selectFields
-      ? await User.findOne(filter, selectFields)
-      : await User.findOne(filter);
+    const document = await User.findOne(filter);
 
     if (!document) {
       throw new NotFoundError(
@@ -127,7 +132,40 @@ export const findUserService = async (
       );
     }
 
-    return document.toObject() as UserType;
+    return mapUserDocumentToUser(document);
+  } catch (error) {
+    if (error instanceof NotFoundError) throw error;
+
+    throw new InternalServerError(
+      "Failed to Retrieve User",
+      "An unexpected error occurred while loading requested user. Please try again later.",
+      "SYSTEM_UNEXPECTED",
+    );
+  }
+};
+
+export const findUserDocumentService = async (
+  filter: FindUserFilter,
+  options?: { select?: string },
+): Promise<UserDocument> => {
+  try {
+    const query = User.findOne(filter);
+
+    if (options?.select) {
+      query.select(options.select);
+    }
+
+    const document = await query;
+
+    if (!document) {
+      throw new NotFoundError(
+        "User Not Found",
+        "No user matching the provided criteria was found.",
+        "USER_NOT_FOUND",
+      );
+    }
+
+    return document;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
 
@@ -147,6 +185,14 @@ export const updateUserByIdService = async (
   try {
     const updateQuery = buildUpdateQuery(options);
 
+    if (Object.keys(updateQuery).length === 0) {
+      throw new BadRequestError(
+        "Invalid Update Payload",
+        "At least one field must be provided to update or remove.",
+        "INVALID_UPDATE_PAYLOAD",
+      );
+    }
+
     const updatedDocument = await User.findByIdAndUpdate(id, updateQuery, {
       new: true,
       session,
@@ -160,7 +206,7 @@ export const updateUserByIdService = async (
       );
     }
 
-    return updatedDocument.toObject() as UserType;
+    return mapUserDocumentToUser(updatedDocument);
   } catch (error) {
     if (error instanceof NotFoundError || error instanceof BadRequestError)
       throw error;
@@ -182,7 +228,7 @@ export const updateUserByIdService = async (
     throw new InternalServerError(
       "Failed to Update User",
       `An unexpected error occurred while updating the user. Please try again later.`,
-      "SYSTEM_UNEXPECTED",
+      "USER_UPDATE_FAILED",
     );
   }
 };

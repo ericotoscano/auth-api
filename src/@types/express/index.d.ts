@@ -1,5 +1,8 @@
 import type { UserType } from "@/shared/types/user.types";
-import type { TokenPayload } from "@/auth/types/token.types";
+import {
+  AccessTokenClaims,
+  VerifiedEmailToken,
+} from "../../auth/types/token.types";
 
 declare global {
   namespace Express {
@@ -11,7 +14,7 @@ declare global {
         headers?: unknown;
         cookies?: unknown;
         user?: UserType;
-        tokenPayload?: TokenPayload;
+        token?: VerifiedEmailToken | AccessTokenClaims | RefreshTokenClaims;
       };
     }
   }

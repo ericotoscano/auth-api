@@ -4,12 +4,8 @@ export type UserType = {
   lastName: string;
   username: string;
   email: string;
-  password: string;
   isVerified: boolean;
-  resetPasswordToken?: string;
-  verificationToken: string;
-  refreshToken: string;
-  lastLogin: string;
+  lastLogin?: string;
   createdAt: string;
   updatedAt: string;
 };

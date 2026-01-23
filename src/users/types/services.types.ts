@@ -31,22 +31,17 @@ export type FindUserFilter = {
 };
 
 export type UpdateUserOptions = {
-  set?: UpdateUserFields;
-  unset?: (keyof UpdateUserFields)[];
+  set?: {
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+    isVerified?: boolean;
+    password?: string;
+    resetPasswordToken?: string;
+    verificationToken?: string;
+    refreshToken?: string;
+    lastLogin?: string;
+  };
+  unset?: ("verificationToken" | "resetPasswordToken" | "refreshToken")[];
 };
-
-export type UpdateUserFields = Partial<
-  Pick<
-    UserType,
-    | "firstName"
-    | "lastName"
-    | "username"
-    | "email"
-    | "password"
-    | "isVerified"
-    | "resetPasswordToken"
-    | "verificationToken"
-    | "refreshToken"
-    | "lastLogin"
-  >
->;

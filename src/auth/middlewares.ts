@@ -1,21 +1,22 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../errors/custom-error.ts";
-import { findUserService } from "../users/services.ts";
+import { findUserDocumentService, findUserService } from "../users/services.ts";
 import {
-  checkTokenService,
-  getTokenFromRequestService,
-  throwInvalidTokenError,
+  verifyTokenClaims,
+  extractTokenFromRequest,
 } from "./services/token.services.ts";
 
-import { EmailTokenPayload, TokenTypes } from "./types/token.types.ts";
+import { EmailTokenClaims, TokenTypes } from "./types/token.types.ts";
 import { ENV } from "../infra/env/env.ts";
+import { mapUserDocumentToUser } from "../users/mappers.ts";
 
 export const validateToken =
   (type: TokenTypes): RequestHandler =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tokenToValidate = getTokenFromRequestService[type](req);
+      const tokenToValidate = extractTokenFromRequest[type](req);
+      console.log(tokenToValidate);
 
       if (!tokenToValidate) {
         throw new UnauthorizedError(
@@ -26,14 +27,15 @@ export const validateToken =
         );
       }
 
-      const payload = await checkTokenService(type, tokenToValidate);
+      const claims = await verifyTokenClaims(type, tokenToValidate);
+
+      req.validated ??= {};
 
       switch (type) {
         case "verification":
         case "resetPassword": {
-          req.validated ??= {};
-          req.validated.tokenPayload = {
-            ...(payload as EmailTokenPayload),
+          req.validated.token = {
+            ...(claims as EmailTokenClaims),
             rawToken: tokenToValidate,
           };
           break;
@@ -41,14 +43,18 @@ export const validateToken =
 
         case "access": {
           try {
-            const user = await findUserService({ _id: payload.id });
+            const user = await findUserService({ _id: claims.id });
 
-            req.validated ??= {};
-            req.validated.tokenPayload = payload;
+            req.validated.token = claims;
             req.validated.user = user;
           } catch (err) {
             if (err instanceof NotFoundError) {
-              throwInvalidTokenError(type);
+              throw new UnauthorizedError(
+                "Invalid Token",
+                "The token is invalid.",
+                "AUTH_INVALID_TOKEN",
+                { type: "access" },
+              );
             }
             throw err;
           }
@@ -57,30 +63,48 @@ export const validateToken =
 
         case "refresh": {
           try {
-            const user = await findUserService(
-              { _id: payload.id },
-              "+refreshToken",
+            const userDocument = await findUserDocumentService(
+              { _id: claims.id },
+              { select: "+refreshToken" },
             );
+
+            if (!userDocument.refreshToken) {
+              res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
+              throw new UnauthorizedError(
+                "Invalid Token",
+                "The token is invalid.",
+                "AUTH_INVALID_TOKEN",
+                { type: "refresh" },
+              );
+            }
 
             const isValid = await bcrypt.compare(
               tokenToValidate,
-              user.refreshToken,
+              userDocument.refreshToken,
             );
 
             if (!isValid) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
-
-              throwInvalidTokenError(type);
+              throw new UnauthorizedError(
+                "Invalid Token",
+                "The token is invalid.",
+                "AUTH_INVALID_TOKEN",
+                { type: "refresh" },
+              );
             }
 
-            req.validated ??= {};
-            req.validated.tokenPayload = payload;
-            req.validated.user = user;
+            req.validated.token = claims;
+            req.validated.user = mapUserDocumentToUser(userDocument);
           } catch (err) {
             if (err instanceof NotFoundError) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
 
-              throwInvalidTokenError(type);
+              throw new UnauthorizedError(
+                "Invalid Token",
+                "The token is invalid.",
+                "AUTH_INVALID_TOKEN",
+                { type: "refresh" },
+              );
             }
             throw err;
           }

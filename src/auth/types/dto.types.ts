@@ -12,7 +12,6 @@ export type LoggedInUserDTOType = {
   id: string;
   accessToken: string;
   lastLogin: string;
-  updatedAt: string;
 };
 
 export type RefreshedUserAccessTokenDTOType = {

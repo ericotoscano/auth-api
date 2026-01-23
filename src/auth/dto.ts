@@ -29,8 +29,7 @@ export class LoggedInUserDTO {
     return {
       id: user._id,
       accessToken,
-      lastLogin: user.lastLogin,
-      updatedAt: user.updatedAt,
+      lastLogin: user.updatedAt,
     };
   }
 }

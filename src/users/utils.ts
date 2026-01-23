@@ -1,7 +1,5 @@
 import { Request } from "express";
 import { SortOrder } from "mongoose";
-import { BadRequestError } from "../errors/custom-error";
-
 import {
   AllowedUsersFiltersParams,
   AllowedUsersFieldsParams,
@@ -34,6 +32,13 @@ const queryMap: Record<
   "-created_at": "-createdAt",
   updated_at: "updatedAt",
   "-updated_at": "-updatedAt",
+};
+
+export const isAllowedParams = <T extends readonly string[]>(
+  value: string,
+  allowedValues: T,
+): value is T[number] => {
+  return allowedValues.includes(value as T[number]);
 };
 
 export const buildBaseUrl = <Q>(req: Request<{}, {}, {}, Q>): string => {
@@ -159,14 +164,6 @@ export const buildUpdateQuery = (
         return acc;
       },
       {} as Record<string, string>,
-    );
-  }
-
-  if (Object.keys(updateQuery).length === 0) {
-    throw new BadRequestError(
-      "Invalid Update Payload",
-      "You must provide at least one field to update or remove.",
-      "INVALID_UPDATE_PAYLOAD",
     );
   }
 

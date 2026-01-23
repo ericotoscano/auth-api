@@ -1,52 +1,75 @@
 import bcrypt from "bcryptjs";
 import {
+  BadRequestError,
   ConflictError,
   InternalServerError,
   NotFoundError,
   UnauthorizedError,
 } from "../../errors/custom-error";
-import { createTokenService, throwInvalidTokenError } from "./token.services";
+import { createTokenService } from "./token.services";
 import { UserType } from "../../shared/types/user.types";
 import {
   createUserService,
   updateUserByIdService,
   findUserService,
+  findUserDocumentService,
 } from "../../users/services";
 import { SignUpRequestBody } from "../types/request.types";
 import {
   SignUpServiceReturn,
   UserAndTokenServiceReturn,
 } from "../types/services.types";
-import { EmailTokenPayload } from "../types/token.types";
 import { sendEmailService } from "../../infra/mail/mail.service";
+import { VerifiedEmailToken } from "../types/token.types";
+import { UserDocument } from "../../users/model/user.document";
+import { mongoose } from "../../infra/db/mongoose";
 
 export const signUpService = async (
   signUpBody: SignUpRequestBody,
 ): Promise<SignUpServiceReturn> => {
-  const createdUser = await createUserService(signUpBody);
+  const session = await mongoose.startSession();
 
-  const verificationToken = createTokenService(
-    { username: createdUser.username },
-    "verification",
-  );
+  session.startTransaction();
 
-  const emailSent = await sendEmailService("verification", {
-    email: createdUser.email,
-    token: verificationToken,
-  });
+  try {
+    const createdUser = await createUserService(signUpBody, session);
 
-  await updateUserByIdService(createdUser._id, {
-    set: { verificationToken },
-  });
+    const verificationToken = createTokenService(
+      { username: createdUser.username },
+      "verification",
+    );
 
-  return { createdUser, emailSent };
+    await updateUserByIdService(
+      createdUser._id,
+      {
+        set: { verificationToken },
+      },
+      session,
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const emailSent = await sendEmailService("verification", {
+      email: createdUser.email,
+      token: verificationToken,
+    });
+
+    return { createdUser, emailSent };
+  } catch (error) {
+    await session.abortTransaction();
+
+    session.endSession();
+
+    throw error;
+  }
 };
 
 export const loginService = async (
   identifier: string,
   password: string,
 ): Promise<UserAndTokenServiceReturn> => {
-  let user: UserType;
+  let userDoc: UserDocument;
   let updatedUser: UserType;
 
   const loginOption = /\S+@\S+\.\S+/.test(identifier)
@@ -54,7 +77,9 @@ export const loginService = async (
     : { username: identifier };
 
   try {
-    user = await findUserService(loginOption, "+password");
+    userDoc = await findUserDocumentService(loginOption, {
+      select: "+password",
+    });
   } catch (error) {
     if (error instanceof NotFoundError) {
       throw new UnauthorizedError(
@@ -67,7 +92,7 @@ export const loginService = async (
     throw error;
   }
 
-  if (!user.isVerified) {
+  if (!userDoc.isVerified) {
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before signing in.",
@@ -75,7 +100,15 @@ export const loginService = async (
     );
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!userDoc.password) {
+    throw new UnauthorizedError(
+      "Invalid Credentials",
+      "The provided email or password is incorrect.",
+      "AUTH_INVALID_CREDENTIALS",
+    );
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, userDoc.password);
 
   if (!isPasswordValid) {
     throw new UnauthorizedError(
@@ -86,21 +119,28 @@ export const loginService = async (
   }
 
   const accessToken = createTokenService(
-    { id: user._id, username: user.username, email: user.email },
+    {
+      id: userDoc._id.toString(),
+      username: userDoc.username,
+      email: userDoc.email,
+    },
     "access",
   );
-  const refreshToken = createTokenService({ id: user._id }, "refresh");
+  const refreshToken = createTokenService(
+    { id: userDoc._id.toString() },
+    "refresh",
+  );
 
   try {
-    updatedUser = await updateUserByIdService(user._id, {
-      set: { refreshToken, lastLogin: new Date().toISOString() },
+    updatedUser = await updateUserByIdService(userDoc._id.toString(), {
+      set: { refreshToken },
     });
   } catch (error) {
     if (error instanceof NotFoundError) {
       throw new InternalServerError(
         "User Update Failed",
         "An unexpected error occurred while updating the user session.",
-        "USER_UPDATE_FAILED",
+        "SYSTEM_UNEXPECTED",
       );
     }
 
@@ -111,30 +151,51 @@ export const loginService = async (
 };
 
 export const verifyUserService = async (
-  tokenPayload: EmailTokenPayload,
+  tokenPayload: VerifiedEmailToken,
 ): Promise<UserType> => {
-  let user: UserType;
+  let userDoc: UserDocument;
 
   try {
-    user = await findUserService(
+    userDoc = await findUserDocumentService(
       { username: tokenPayload.username },
-      "+verificationToken",
+      { select: "+verificationToken" },
     );
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throwInvalidTokenError("verification");
+      throw new UnauthorizedError(
+        "Invalid Token",
+        "The token is invalid.",
+        "AUTH_INVALID_TOKEN",
+        { type: "verification" },
+      );
     }
     throw error;
   }
 
-  if (
-    !user.verificationToken ||
-    !(await bcrypt.compare(tokenPayload.rawToken!, user.verificationToken))
-  ) {
-    throwInvalidTokenError("verification");
+  if (!userDoc.verificationToken) {
+    throw new UnauthorizedError(
+      "Invalid Token",
+      "The token is invalid.",
+      "AUTH_INVALID_TOKEN",
+      { type: "verification" },
+    );
   }
 
-  if (user.isVerified) {
+  const isValidToken = await bcrypt.compare(
+    tokenPayload.rawToken,
+    userDoc.verificationToken,
+  );
+
+  if (!isValidToken) {
+    throw new UnauthorizedError(
+      "Invalid Token",
+      "The token is invalid.",
+      "AUTH_INVALID_TOKEN",
+      { type: "verification" },
+    );
+  }
+
+  if (userDoc.isVerified) {
     throw new ConflictError(
       "User Verification Conflict",
       "The user has already been verified. You can log in normally.",
@@ -143,7 +204,7 @@ export const verifyUserService = async (
   }
 
   try {
-    const verifiedUser = await updateUserByIdService(user._id, {
+    const verifiedUser = await updateUserByIdService(userDoc._id.toString(), {
       set: { isVerified: true },
       unset: ["verificationToken"],
     });
@@ -153,7 +214,7 @@ export const verifyUserService = async (
     throw new InternalServerError(
       "User Verification Failed",
       "An unexpected error occurred while verifying the user.",
-      "USER_UPDATE_FAILED",
+      "SYSTEM_UNEXPECTED",
     );
   }
 };
@@ -216,31 +277,52 @@ export const resendVerificationEmailService = async (
 };
 
 export const resetPasswordService = async (
-  tokenPayload: EmailTokenPayload,
-  password: string,
+  tokenPayload: VerifiedEmailToken,
+  newPassword: string,
 ): Promise<void> => {
-  let user: UserType;
+  let userDoc: UserDocument;
 
   try {
-    user = await findUserService(
+    userDoc = await findUserDocumentService(
       { username: tokenPayload.username },
-      "+resetPasswordToken",
+      { select: "+resetPasswordToken +password" },
     );
   } catch (error) {
     if (error instanceof NotFoundError) {
-      throwInvalidTokenError("resetPassword");
+      throw new UnauthorizedError(
+        "Invalid Token",
+        "The token is invalid.",
+        "AUTH_INVALID_TOKEN",
+        { type: "resetPassword" },
+      );
     }
     throw error;
   }
 
-  if (
-    !user.resetPasswordToken ||
-    !(await bcrypt.compare(tokenPayload.rawToken!, user.resetPasswordToken))
-  ) {
-    throwInvalidTokenError("resetPassword");
+  if (!userDoc.resetPasswordToken) {
+    throw new UnauthorizedError(
+      "Invalid Token",
+      "The token is invalid.",
+      "AUTH_INVALID_TOKEN",
+      { type: "resetPassword" },
+    );
   }
 
-  if (!user.isVerified) {
+  const isValidToken = await bcrypt.compare(
+    tokenPayload.rawToken,
+    userDoc.resetPasswordToken,
+  );
+
+  if (!isValidToken) {
+    throw new UnauthorizedError(
+      "Invalid Token",
+      "The token is invalid.",
+      "AUTH_INVALID_TOKEN",
+      { type: "resetPassword" },
+    );
+  }
+
+  if (!userDoc.isVerified) {
     throw new UnauthorizedError(
       "User Not Verified",
       "This account must be verified before resetting the password.",
@@ -248,16 +330,34 @@ export const resetPasswordService = async (
     );
   }
 
+  if (!userDoc.password) {
+    throw new InternalServerError(
+      "Password Reset Failed",
+      "An unexpected error occurred while resetting the password.",
+      "SYSTEM_UNEXPECTED",
+    );
+  }
+
+  const isSamePassword = await bcrypt.compare(newPassword, userDoc.password);
+
+  if (isSamePassword) {
+    throw new BadRequestError(
+      "Invalid Password",
+      "The new password must be different from the current password.",
+      "AUTH_PASSWORD_REUSE",
+    );
+  }
+
   try {
-    await updateUserByIdService(user._id, {
-      set: { password },
+    await updateUserByIdService(userDoc._id.toString(), {
+      set: { password: newPassword },
       unset: ["resetPasswordToken"],
     });
   } catch {
     throw new InternalServerError(
       "Password Reset Failed",
       "An unexpected error occurred while resetting the password.",
-      "USER_UPDATE_FAILED",
+      "SYSTEM_UNEXPECTED",
     );
   }
 };
@@ -292,7 +392,7 @@ export const sendResetPasswordEmailService = async (
     throw new InternalServerError(
       "User Update Failed",
       "An unexpected error occurred while preparing the password reset.",
-      "USER_UPDATE_FAILED",
+      "SYSTEM_UNEXPECTED",
     );
   }
 
@@ -316,7 +416,7 @@ export const refreshUserAccessTokenService = async (
   let updatedUser: UserType;
 
   const accessToken = createTokenService(
-    { _id: user._id, username: user.username, email: user.email },
+    { id: user._id, username: user.username, email: user.email },
     "access",
   );
   const refreshToken = createTokenService({ id: user._id }, "refresh");
@@ -329,7 +429,7 @@ export const refreshUserAccessTokenService = async (
     throw new InternalServerError(
       "Access Token Refresh Failed",
       "An unexpected error occurred while refreshing the access token.",
-      "USER_UPDATE_FAILED",
+      "SYSTEM_UNEXPECTED",
     );
   }
 
@@ -345,7 +445,7 @@ export const logoutService = async (user: UserType): Promise<void> => {
     throw new InternalServerError(
       "User Update Failed",
       "An unexpected error occurred while updating the user session.",
-      "USER_UPDATE_FAILED",
+      "SYSTEM_UNEXPECTED",
     );
   }
 };

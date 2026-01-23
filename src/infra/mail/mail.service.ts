@@ -16,10 +16,9 @@ export const sendEmailService = async (
 
     return true;
   } catch (error: any) {
-    logger.error(`Failed to send ${type} email`, {
+    logger.warn(`Failed to send ${type} email`, {
       errorCode: "EMAIL_SEND_FAILED",
       details: { message: error.message },
-      stack: error.stack,
     });
 
     return false;

@@ -1,12 +1,17 @@
 import { ErrorCode } from "./error-codes";
 
 export class CustomError extends Error {
+  statusCode: number;
+  feedback: string;
+  errorCode: ErrorCode;
+  details?: Record<string, unknown>;
+
   constructor(
     message: string,
-    readonly statusCode: number,
-    readonly feedback: string,
-    readonly errorCode: ErrorCode,
-    readonly details?: Record<string, unknown>,
+    statusCode: number,
+    feedback: string,
+    errorCode: ErrorCode,
+    details?: Record<string, unknown>,
   ) {
     super(message);
 
@@ -17,8 +22,10 @@ export class CustomError extends Error {
     }
 
     this.name = this.constructor.name;
-
-    Object.freeze(this);
+    this.statusCode = statusCode;
+    this.feedback = feedback;
+    this.errorCode = errorCode;
+    this.details = details;
   }
 }
 

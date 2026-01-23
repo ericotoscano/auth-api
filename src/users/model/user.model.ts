@@ -1,6 +1,6 @@
-import { UserType } from "../shared/types/user.types.ts";
-import { mongoose } from "../infra/db/mongoose.ts";
+import { mongoose } from "../../infra/db/mongoose.ts";
 import bcrypt from "bcryptjs";
+import { UserDocument } from "./user.document.ts";
 
 const userSchema = new mongoose.Schema(
   {
@@ -54,19 +54,19 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+const hashableFields = [
+  "password",
+  "refreshToken",
+  "resetPasswordToken",
+  "verificationToken",
+] as const;
+
 userSchema.pre("findOneAndUpdate", async function (next) {
-  const update = this.getUpdate() as mongoose.UpdateQuery<UserType>;
+  const update = this.getUpdate() as mongoose.UpdateQuery<UserDocument>;
 
   if (!update || !update.$set) return next();
 
-  const fieldsToHash: (keyof UserType)[] = [
-    "password",
-    "refreshToken",
-    "resetPasswordToken",
-    "verificationToken",
-  ];
-
-  for (const field of fieldsToHash) {
+  for (const field of hashableFields) {
     const value = update.$set[field];
 
     if (typeof value === "string") {
@@ -77,6 +77,6 @@ userSchema.pre("findOneAndUpdate", async function (next) {
   next();
 });
 
-const User = mongoose.model<UserType>("User", userSchema);
+const User = mongoose.model<UserDocument>("User", userSchema);
 
 export default User;

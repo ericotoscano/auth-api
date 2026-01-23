@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "../../users/model";
+import User from "../../users/model/user.model";
 import { logger } from "../logger/logger";
 import { InternalServerError } from "../../errors/custom-error";
 import { ENV } from "../env/env";

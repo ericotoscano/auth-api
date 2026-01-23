@@ -4,7 +4,12 @@ import {
   UnauthorizedError,
   InternalServerError,
 } from "../../errors/custom-error";
-import { TokenTypes, TokenOptions, TokenPayload } from "../types/token.types";
+import {
+  TokenTypes,
+  TokenOptions,
+  TokenClaims,
+  TokenClaimsByType,
+} from "../types/token.types";
 import { ENV } from "../../infra/env/env";
 
 const tokenMessageByType = {
@@ -25,7 +30,7 @@ const getTokenOptionsByType = (type: TokenTypes): TokenOptions => {
   };
 };
 
-export const getTokenFromRequestService: Record<
+export const extractTokenFromRequest: Record<
   TokenTypes,
   (req: Request) => string | undefined
 > = {
@@ -35,9 +40,9 @@ export const getTokenFromRequestService: Record<
   refresh: (req) => req.cookies[ENV.REFRESH_TOKEN_COOKIE_NAME],
 } as const;
 
-export const createTokenService = (
-  payload: TokenPayload,
-  type: TokenTypes,
+export const createTokenService = <T extends TokenTypes>(
+  payload: TokenClaimsByType[T],
+  type: T,
 ): string => {
   const { secret, expiresInMinutes, audience, issuer } =
     getTokenOptionsByType(type);
@@ -49,14 +54,14 @@ export const createTokenService = (
   });
 };
 
-export const checkTokenService = async (
+export const verifyTokenClaims = async (
   type: TokenTypes,
   token: string,
-): Promise<TokenPayload> => {
+): Promise<TokenClaims> => {
   try {
     const { secret } = getTokenOptionsByType(type);
 
-    return jwt.verify(token, secret) as TokenPayload;
+    return jwt.verify(token, secret) as TokenClaims;
   } catch (error: unknown) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new UnauthorizedError(
@@ -75,7 +80,12 @@ export const checkTokenService = async (
       );
     }
     if (error instanceof jwt.JsonWebTokenError) {
-      throwInvalidTokenError(type);
+      throw new UnauthorizedError(
+        "Invalid Token",
+        "The token is invalid.",
+        "AUTH_INVALID_TOKEN",
+        { type },
+      );
     }
 
     throw new InternalServerError(
@@ -85,13 +95,4 @@ export const checkTokenService = async (
       { type },
     );
   }
-};
-
-export const throwInvalidTokenError = (type: TokenTypes) => {
-  throw new UnauthorizedError(
-    "Invalid Token",
-    "The token is invalid.",
-    "AUTH_INVALID_TOKEN",
-    { type },
-  );
 };

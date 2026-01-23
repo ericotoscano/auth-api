@@ -30,8 +30,8 @@ import {
   SignedUpUserDTOType,
   VerifiedUserDTOType,
 } from "./types/dto.types";
-import { EmailTokenPayload } from "./types/token.types";
 import { ENV } from "../infra/env/env";
+import { VerifiedEmailToken } from "./types/token.types";
 
 export const signup = async (
   req: Request<{}, {}, SignUpRequestBody>,
@@ -91,7 +91,7 @@ export const verifyUser = async (
   res: TypedResponse<VerifiedUserDTOType>,
   next: NextFunction,
 ) => {
-  const tokenPayload = req.validated!.tokenPayload as EmailTokenPayload;
+  const tokenPayload = req.validated!.token as VerifiedEmailToken;
 
   try {
     const verifiedUser = await verifyUserService(tokenPayload);
@@ -132,7 +132,7 @@ export const resetPassword = async (
   res: TypedResponse<{}>,
   next: NextFunction,
 ) => {
-  const tokenPayload = req.validated!.tokenPayload as EmailTokenPayload;
+  const tokenPayload = req.validated!.token as VerifiedEmailToken;
   const { password } = req.validated!.body as ResetPasswordRequestBody;
 
   try {

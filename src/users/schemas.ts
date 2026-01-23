@@ -7,13 +7,7 @@ import {
   AllowedUsersSortParams,
   allowedUpdateUserFields,
 } from "./constants/user.constants";
-
-export const isAllowedParams = <T extends readonly string[]>(
-  value: string,
-  allowedValues: T,
-): value is T[number] => {
-  return allowedValues.includes(value as T[number]);
-};
+import { isAllowedParams } from "./utils";
 
 export const userIdSchema = z.object({
   id: z
@@ -166,16 +160,6 @@ export const updateUserSchema = z
       })
       .max(8, {
         message: "Username must be no longer than 8 characters.",
-      })
-      .optional(),
-
-    avatarUrl: z
-      .string({
-        invalid_type_error: "Avatar URL must be a string.",
-      })
-      .trim()
-      .url({
-        message: "Avatar URL must be a valid URL.",
       })
       .optional(),
   })
