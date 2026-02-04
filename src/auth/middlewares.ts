@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import { NotFoundError, UnauthorizedError } from "../errors/custom-error.ts";
-import { findUserDocumentService, findUserService } from "../users/services.ts";
+import { findUserDocumentService } from "../users/services.ts";
 import {
   verifyTokenClaims,
   extractTokenFromRequest,
@@ -9,14 +9,13 @@ import {
 
 import { EmailTokenClaims, TokenTypes } from "./types/token.types.ts";
 import { ENV } from "../infra/env/env.ts";
-import { mapUserDocumentToUser } from "../users/mappers.ts";
+import { UserMapper } from "../users/mappers.ts";
 
 export const validateToken =
   (type: TokenTypes): RequestHandler =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tokenToValidate = extractTokenFromRequest[type](req);
-      console.log(tokenToValidate);
 
       if (!tokenToValidate) {
         throw new UnauthorizedError(
@@ -43,12 +42,12 @@ export const validateToken =
 
         case "access": {
           try {
-            const user = await findUserService({ _id: claims.id });
+            const userDoc = await findUserDocumentService({ _id: claims.id });
 
             req.validated.token = claims;
-            req.validated.user = user;
-          } catch (err) {
-            if (err instanceof NotFoundError) {
+            req.validated.user = UserMapper.toForAccess(userDoc);
+          } catch (error) {
+            if (error instanceof NotFoundError) {
               throw new UnauthorizedError(
                 "Invalid Token",
                 "The token is invalid.",
@@ -56,19 +55,19 @@ export const validateToken =
                 { type: "access" },
               );
             }
-            throw err;
+            throw error;
           }
           break;
         }
 
         case "refresh": {
           try {
-            const userDocument = await findUserDocumentService(
+            const userDoc = await findUserDocumentService(
               { _id: claims.id },
               { select: "+refreshToken" },
             );
 
-            if (!userDocument.refreshToken) {
+            if (!userDoc.refreshToken) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
               throw new UnauthorizedError(
                 "Invalid Token",
@@ -80,7 +79,7 @@ export const validateToken =
 
             const isValid = await bcrypt.compare(
               tokenToValidate,
-              userDocument.refreshToken,
+              userDoc.refreshToken,
             );
 
             if (!isValid) {
@@ -94,9 +93,9 @@ export const validateToken =
             }
 
             req.validated.token = claims;
-            req.validated.user = mapUserDocumentToUser(userDocument);
-          } catch (err) {
-            if (err instanceof NotFoundError) {
+            req.validated.user = UserMapper.toForAccess(userDoc);
+          } catch (error) {
+            if (error instanceof NotFoundError) {
               res.clearCookie(ENV.REFRESH_TOKEN_COOKIE_NAME);
 
               throw new UnauthorizedError(
@@ -106,7 +105,7 @@ export const validateToken =
                 { type: "refresh" },
               );
             }
-            throw err;
+            throw error;
           }
           break;
         }

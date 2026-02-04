@@ -18,9 +18,16 @@ export const appErrorHandler = (
   let normalizedError = err;
 
   if (err instanceof CustomError) {
+    const isConditional = conditionalErrorCodes.has(err.errorCode);
+
+    const allowConditionalAsUserFacing =
+      err.errorCode === "USER_NOT_FOUND" &&
+      req.method === "GET" &&
+      /^\/api\/v1\/users\/[^/]+$/.test(req.path);
+
     const isInternalOnly =
       internalOnlyErrorCodes.has(err.errorCode) ||
-      conditionalErrorCodes.has(err.errorCode);
+      (isConditional && !allowConditionalAsUserFacing);
 
     if (isInternalOnly) {
       normalizedError = new CustomError(

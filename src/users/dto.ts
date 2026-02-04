@@ -1,16 +1,12 @@
-import { UserType } from "../shared/types/user.types";
 import {
-  FindAllUsersDTOType,
-  FindUserByIdDTOType,
-  UpdateUserByIdDTOType,
+  FindUserByIdDTO,
+  FindUsersDTO,
+  UpdateUserByIdDTO,
 } from "./types/dto.types";
-import { PaginationType, UpdateUserFields } from "./types/services.types";
+import { Pagination } from "./types/services.types";
 
-export class FindAllUsersDTO {
-  static toJSON(
-    documents: UserType[],
-    pagination: PaginationType,
-  ): FindAllUsersDTOType {
+export class FindUsersDTOMapper {
+  static toJSON(documents: UserType[], pagination: Pagination): FindUsersDTO {
     const results = documents.map((doc) => {
       return {
         id: doc._id,
@@ -18,6 +14,7 @@ export class FindAllUsersDTO {
         lastName: doc.lastName,
         username: doc.username,
         createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
       };
     });
 
@@ -28,8 +25,8 @@ export class FindAllUsersDTO {
   }
 }
 
-export class FindUserByIdDTO {
-  static toJSON(user: UserType): FindUserByIdDTOType {
+export class FindUserByIdDTOMapper {
+  static toJSON(user: UserType): FindUserByIdDTO {
     return {
       id: user._id,
       firstName: user.firstName,
@@ -41,14 +38,10 @@ export class FindUserByIdDTO {
   }
 }
 
-export class UpdateUserByIdDTO {
-  static toJSON(
-    user: UserType,
-    fields: UpdateUserFields,
-  ): UpdateUserByIdDTOType {
+export class UpdateUserByIdDTOMapper {
+  static toJSON(user: UserType): UpdateUserByIdDTO {
     return {
       id: user._id,
-      updatedFields: Object.keys(fields),
       updatedAt: user.updatedAt,
     };
   }

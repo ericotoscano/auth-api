@@ -7,12 +7,12 @@ import {
 } from "../schemas";
 import { userEmailSchema } from "../../users/schemas";
 
-export type SignUpRequestBody = z.infer<typeof signUpSchema>;
+export type SignUpRequest = z.infer<typeof signUpSchema>;
 
-export type LoginRequestBody = z.infer<typeof loginSchema>;
+export type LoginRequest = z.infer<typeof loginSchema>;
 
-export type ResetPasswordRequestBody = z.infer<typeof resetPasswordSchema>;
+export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
 
-export type EmailRequestBody = z.infer<typeof userEmailSchema>;
+export type EmailInputRequest = z.infer<typeof userEmailSchema>;
 
-export type VerifyRequestBody = z.infer<typeof jwtSchema>;
+export type TokenVerificationRequest = z.infer<typeof jwtSchema>;

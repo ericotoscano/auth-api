@@ -5,20 +5,23 @@ import {
   findUserService,
   updateUserByIdService,
 } from "./services";
-import { FindAllUsersDTO, FindUserByIdDTO, UpdateUserByIdDTO } from "./dto";
-import { TypedResponse } from "../shared/types/response.types";
+import { FindUserByIdDTOMapper, FindUsersDTOMapper, UpdateUserByIdDTOMapper } from "./dto";
+import { ApiResponse } from "../shared/types/response.types";
 import { buildBaseUrl } from "./utils";
 import {
-  FindAllUsersDTOType,
-  FindUserByIdDTOType,
-  UpdateUserByIdDTOType,
+  FindUsersQuery,
+  UpdateUserRequest,
+  UserIdRequest,
+} from "./types/request.types";
+import {
+  FindUserByIdDTO,
+  FindUsersDTO,
+  UpdateUserByIdDTO,
 } from "./types/dto.types";
-import { UserIdRequest, UpdateUserRequestBody } from "./types/request.types";
-import { FindAllUsersQueryRequest } from "./types/services.types";
 
 export const findAllUsers = async (
-  req: Request<{}, {}, {}, FindAllUsersQueryRequest>,
-  res: TypedResponse<FindAllUsersDTOType>,
+  req: Request<{}, {}, {}, FindUsersQuery>,
+  res: ApiResponse<FindUsersDTO>,
   next: NextFunction,
 ) => {
   try {
@@ -35,7 +38,7 @@ export const findAllUsers = async (
         results.length === 0
           ? "No users found matching the provided filters."
           : "Users retrieved successfully.",
-      data: FindAllUsersDTO.toJSON(results, pagination),
+      data: FindUsersDTOMapper.toJSON(results, pagination),
     });
   } catch (error) {
     next(error);
@@ -44,7 +47,7 @@ export const findAllUsers = async (
 
 export const findUserById = async (
   req: Request<UserIdRequest>,
-  res: TypedResponse<FindUserByIdDTOType>,
+  res: ApiResponse<FindUserByIdDTO>,
   next: NextFunction,
 ) => {
   const { id } = req.validated!.params as UserIdRequest;
@@ -55,7 +58,7 @@ export const findUserById = async (
     res.status(200).json({
       success: true,
       message: "User retrieved successfully.",
-      data: FindUserByIdDTO.toJSON(user),
+      data: FindUserByIdDTOMapper.toJSON(user),
     });
   } catch (error) {
     next(error);
@@ -63,12 +66,12 @@ export const findUserById = async (
 };
 
 export const updateUserById = async (
-  req: Request<UserIdRequest, {}, UpdateUserRequestBody>,
-  res: TypedResponse<UpdateUserByIdDTOType>,
+  req: Request<UserIdRequest, {}, UpdateUserRequest>,
+  res: ApiResponse<UpdateUserByIdDTO>,
   next: NextFunction,
 ) => {
   const { id } = req.validated!.params as UserIdRequest;
-  const updateOptions = req.validated!.body as UpdateUserRequestBody;
+  const updateOptions = req.validated!.body as UpdateUserRequest;
 
   try {
     const updatedUser = await updateUserByIdService(id, {
@@ -78,7 +81,7 @@ export const updateUserById = async (
     res.status(200).json({
       success: true,
       message: "User updated successfully.",
-      data: UpdateUserByIdDTO.toJSON(updatedUser, updateOptions),
+      data: UpdateUserByIdDTOMapper.toJSON(updatedUser),
     });
   } catch (error) {
     next(error);
@@ -87,7 +90,7 @@ export const updateUserById = async (
 
 export const deleteUserById = async (
   req: Request<UserIdRequest>,
-  res: TypedResponse<{}>,
+  res: ApiResponse<{}>,
   next: NextFunction,
 ) => {
   const { id } = req.validated!.params as UserIdRequest;

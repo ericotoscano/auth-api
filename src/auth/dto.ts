@@ -1,47 +1,48 @@
-import { UserType } from "../shared/types/user.types";
+import { UserCreated } from "../shared/types/user.types";
 import {
-  SignedUpUserDTOType,
-  VerifiedUserDTOType,
-  LoggedInUserDTOType,
-  RefreshedUserAccessTokenDTOType,
+  AccessTokenRefreshedDTO,
+  UserSessionDTO,
+  UserSignedUpDTO,
+  UserVerifiedDTO,
 } from "./types/dto.types";
+import { UserLoggedIn, UserVerified } from "./types/services.types";
 
-export class SignedUpUserDTO {
-  static toJSON(user: UserType): SignedUpUserDTOType {
+export class UserSignedUpDTOMapper {
+  static toJSON(user: UserCreated): UserSignedUpDTO {
     return {
       isVerified: user.isVerified,
-      createdAt: user.createdAt,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 }
 
-export class VerifiedUserDTO {
-  static toJSON(user: UserType): VerifiedUserDTOType {
+export class UserSessionDTOMapper {
+  static toJSON(user: UserLoggedIn, accessToken: string): UserSessionDTO {
     return {
-      isVerified: user.isVerified,
-      updatedAt: user.updatedAt,
-    };
-  }
-}
-
-export class LoggedInUserDTO {
-  static toJSON(user: UserType, accessToken: string): LoggedInUserDTOType {
-    return {
-      id: user._id,
+      id: user._id.toString(),
       accessToken,
-      lastLogin: user.updatedAt,
+      lastLogin: user.updatedAt.toISOString(),
     };
   }
 }
 
-export class RefreshedUserAccessTokenDTO {
+export class UserVerifiedDTOMapper {
+  static toJSON(user: UserVerified): UserVerifiedDTO {
+    return {
+      isVerified: user.isVerified,
+      updatedAt: user.updatedAt.toISOString(),
+    };
+  }
+}
+
+export class AccessTokenRefreshedDTOMapper {
   static toJSON(
-    user: UserType,
+    user: UserLoggedIn,
     accessToken: string,
-  ): RefreshedUserAccessTokenDTOType {
+  ): AccessTokenRefreshedDTO {
     return {
       accessToken,
-      updatedAt: user.updatedAt,
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 }

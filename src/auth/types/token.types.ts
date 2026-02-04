@@ -10,7 +10,7 @@ export interface EmailTokenClaims extends JwtPayload {
   username: string;
 }
 
-export interface VerifiedEmailToken extends EmailTokenClaims {
+export interface EmailTokenVerified extends EmailTokenClaims {
   rawToken: string;
 }
 export interface AccessTokenClaims extends JwtPayload {

@@ -1,11 +1,10 @@
-export type UserType = {
-  _id: string;
-  firstName: string;
-  lastName: string;
+import { Types } from "mongoose";
+
+export type UserCreated = {
+  _id: Types.ObjectId;
   username: string;
   email: string;
   isVerified: boolean;
-  lastLogin?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
 };
+

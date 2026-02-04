@@ -2,53 +2,53 @@ import { NextFunction, Request } from "express";
 import {
   signUpService,
   loginService,
-  verifyUserService,
   resendVerificationEmailService,
   resetPasswordService,
   sendResetPasswordEmailService,
   refreshUserAccessTokenService,
   logoutService,
+  verifyService,
 } from "./services/auth.services";
-import { TypedResponse } from "../shared/types/response.types";
+import { ApiResponse } from "../shared/types/response.types";
 import {
-  SignedUpUserDTO,
-  VerifiedUserDTO,
-  LoggedInUserDTO,
-  RefreshedUserAccessTokenDTO,
-} from "./dto";
-import { UserType } from "../shared/types/user.types";
-import {
-  EmailRequestBody,
-  LoginRequestBody,
-  ResetPasswordRequestBody,
-  SignUpRequestBody,
-  VerifyRequestBody,
+  EmailInputRequest,
+  LoginRequest,
+  ResetPasswordRequest,
+  SignUpRequest,
+  TokenVerificationRequest,
 } from "./types/request.types";
-import {
-  LoggedInUserDTOType,
-  RefreshedUserAccessTokenDTOType,
-  SignedUpUserDTOType,
-  VerifiedUserDTOType,
-} from "./types/dto.types";
 import { ENV } from "../infra/env/env";
-import { VerifiedEmailToken } from "./types/token.types";
+import { EmailTokenVerified } from "./types/token.types";
+import {
+  AccessTokenRefreshedDTO,
+  UserSessionDTO,
+  UserSignedUpDTO,
+  UserVerifiedDTO,
+} from "./types/dto.types";
+import {
+  AccessTokenRefreshedDTOMapper,
+  UserSessionDTOMapper,
+  UserSignedUpDTOMapper,
+  UserVerifiedDTOMapper,
+} from "./dto";
+import { UserForAccess } from "./types/services.types";
 
 export const signup = async (
-  req: Request<{}, {}, SignUpRequestBody>,
-  res: TypedResponse<SignedUpUserDTOType>,
+  req: Request<{}, {}, SignUpRequest>,
+  res: ApiResponse<UserSignedUpDTO>,
   next: NextFunction,
 ) => {
   try {
-    const signUpBody = req.validated!.body as SignUpRequestBody;
+    const signUpBody = req.validated!.body as SignUpRequest;
 
-    const { createdUser, emailSent } = await signUpService(signUpBody);
+    const { userCreated, emailSent } = await signUpService(signUpBody);
 
     res.status(201).json({
       success: true,
       message: emailSent
         ? "User created successfully. Please access the provided email to verify your user account."
         : "User created successfully, but there was an issue sending the verification email. Request a new verification email.",
-      data: SignedUpUserDTO.toJSON(createdUser),
+      data: UserSignedUpDTOMapper.toJSON(userCreated),
     });
   } catch (error) {
     next(error);
@@ -56,14 +56,14 @@ export const signup = async (
 };
 
 export const login = async (
-  req: Request<{}, {}, LoginRequestBody>,
-  res: TypedResponse<LoggedInUserDTOType>,
+  req: Request<{}, {}, LoginRequest>,
+  res: ApiResponse<UserSessionDTO>,
   next: NextFunction,
 ) => {
-  const { identifier, password } = req.validated!.body as LoginRequestBody;
+  const { identifier, password } = req.validated!.body as LoginRequest;
 
   try {
-    const { updatedUser, accessToken, refreshToken } = await loginService(
+    const { user, accessToken, refreshToken } = await loginService(
       identifier,
       password,
     );
@@ -79,27 +79,27 @@ export const login = async (
       .json({
         success: true,
         message: "User logged in successfully.",
-        data: LoggedInUserDTO.toJSON(updatedUser, accessToken),
+        data: UserSessionDTOMapper.toJSON(user, accessToken),
       });
   } catch (error) {
     next(error);
   }
 };
 
-export const verifyUser = async (
-  req: Request<{}, {}, VerifyRequestBody>,
-  res: TypedResponse<VerifiedUserDTOType>,
+export const verify = async (
+  req: Request<{}, {}, TokenVerificationRequest>,
+  res: ApiResponse<UserVerifiedDTO>,
   next: NextFunction,
 ) => {
-  const tokenPayload = req.validated!.token as VerifiedEmailToken;
+  const tokenPayload = req.validated!.token as EmailTokenVerified;
 
   try {
-    const verifiedUser = await verifyUserService(tokenPayload);
+    const userVerified = await verifyService(tokenPayload);
 
     res.status(200).json({
       success: true,
       message: "User verified successfully.",
-      data: VerifiedUserDTO.toJSON(verifiedUser),
+      data: UserVerifiedDTOMapper.toJSON(userVerified),
     });
   } catch (error) {
     next(error);
@@ -107,11 +107,11 @@ export const verifyUser = async (
 };
 
 export const resendVerificationEmail = async (
-  req: Request<{}, {}, EmailRequestBody>,
-  res: TypedResponse<{}>,
+  req: Request<{}, {}, EmailInputRequest>,
+  res: ApiResponse<{}>,
   next: NextFunction,
 ) => {
-  const { email } = req.validated!.body as EmailRequestBody;
+  const { email } = req.validated!.body as EmailInputRequest;
 
   try {
     await resendVerificationEmailService(email);
@@ -128,12 +128,12 @@ export const resendVerificationEmail = async (
 };
 
 export const resetPassword = async (
-  req: Request<{}, {}, ResetPasswordRequestBody>,
-  res: TypedResponse<{}>,
+  req: Request<{}, {}, ResetPasswordRequest>,
+  res: ApiResponse<{}>,
   next: NextFunction,
 ) => {
-  const tokenPayload = req.validated!.token as VerifiedEmailToken;
-  const { password } = req.validated!.body as ResetPasswordRequestBody;
+  const tokenPayload = req.validated!.token as EmailTokenVerified;
+  const { password } = req.validated!.body as ResetPasswordRequest;
 
   try {
     await resetPasswordService(tokenPayload, password);
@@ -149,11 +149,11 @@ export const resetPassword = async (
 };
 
 export const sendResetPasswordEmail = async (
-  req: Request<{}, {}, EmailRequestBody>,
-  res: TypedResponse<{}>,
+  req: Request<{}, {}, EmailInputRequest>,
+  res: ApiResponse<{}>,
   next: NextFunction,
 ) => {
-  const { email } = req.validated!.body as EmailRequestBody;
+  const { email } = req.validated!.body as EmailInputRequest;
 
   try {
     await sendResetPasswordEmailService(email);
@@ -169,16 +169,16 @@ export const sendResetPasswordEmail = async (
   }
 };
 
-export const refreshUserAccessToken = async (
+export const refreshAccessToken = async (
   req: Request,
-  res: TypedResponse<RefreshedUserAccessTokenDTOType>,
+  res: ApiResponse<AccessTokenRefreshedDTO>,
   next: NextFunction,
 ) => {
-  const user = req.validated!.user as UserType;
+  const userForAccess = req.validated!.user as UserForAccess;
 
   try {
-    const { updatedUser, accessToken, refreshToken } =
-      await refreshUserAccessTokenService(user);
+    const { user, accessToken, refreshToken } =
+      await refreshUserAccessTokenService(userForAccess);
 
     res
       .status(200)
@@ -191,7 +191,7 @@ export const refreshUserAccessToken = async (
       .json({
         success: true,
         message: "Access token refreshed successfully.",
-        data: RefreshedUserAccessTokenDTO.toJSON(updatedUser, accessToken),
+        data: AccessTokenRefreshedDTOMapper.toJSON(user, accessToken),
       });
   } catch (error) {
     next(error);
@@ -200,13 +200,13 @@ export const refreshUserAccessToken = async (
 
 export const logout = async (
   req: Request,
-  res: TypedResponse<{}>,
+  res: ApiResponse<{}>,
   next: NextFunction,
 ) => {
-  const user = req.validated!.user!;
+  const userForAccess = req.validated!.user! as UserForAccess;
 
   try {
-    await logoutService(user);
+    await logoutService(userForAccess);
 
     res
       .status(204)

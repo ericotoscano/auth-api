@@ -2,12 +2,12 @@ import { Router } from "express";
 import {
   login,
   logout,
-  refreshUserAccessToken,
+  refreshAccessToken,
   resendVerificationEmail,
   resetPassword,
   sendResetPasswordEmail,
   signup,
-  verifyUser,
+  verify,
 } from "./controller";
 import { validateSchema } from "../infra/http/middlewares/validate-schema.middleware";
 import { loginSchema, resetPasswordSchema, signUpSchema } from "./schemas";
@@ -18,14 +18,12 @@ const router = Router();
 
 router.post("/signup", validateSchema(signUpSchema, "body"), signup);
 router.post("/login", validateSchema(loginSchema, "body"), login);
-
-router.post("/verify", validateToken("verification"), verifyUser);
+router.post("/verify", validateToken("verification"), verify);
 router.post(
   "/verification/resend",
   validateSchema(userEmailSchema, "body"),
   resendVerificationEmail,
 );
-
 router.post(
   "/password/reset",
   validateToken("resetPassword"),
@@ -37,8 +35,7 @@ router.post(
   validateSchema(userEmailSchema, "body"),
   sendResetPasswordEmail,
 );
-
-router.post("/token/refresh", validateToken("refresh"), refreshUserAccessToken);
+router.post("/token/refresh", validateToken("refresh"), refreshAccessToken);
 router.post("/logout", validateToken("refresh"), logout);
 
 export default router;

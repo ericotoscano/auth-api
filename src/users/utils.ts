@@ -73,11 +73,13 @@ export const buildQueryFilters = (
 };
 
 export const buildQueryFields = (
-  fields?: (string | number | symbol)[],
+  fields?: string,
 ): Partial<Record<AllowedUsersQueryFields, 1>> => {
   if (!fields || fields.length === 0) return {};
 
-  return fields.reduce(
+  const fieldsArray = fields.split(",");
+
+  return fieldsArray.reduce(
     (acc, field) => {
       if (
         allowedUsersFieldsParams.includes(field as AllowedUsersFieldsParams)

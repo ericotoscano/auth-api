@@ -1,17 +1,18 @@
 import { PaginationType } from "./services.types";
 
-export type FindAllUsersDTOType = {
+export type FindUsersDTO = {
   pagination: PaginationType;
   results: {
     id: string;
-    firstName: string;
-    lastName: string;
-    username: string;
-    createdAt: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    createdAt?: string;
+    updatedAt?: string;
   }[];
 };
 
-export type FindUserByIdDTOType = {
+export type FindUserByIdDTO = {
   id: string;
   firstName: string;
   lastName: string;
@@ -20,13 +21,12 @@ export type FindUserByIdDTOType = {
   createdAt: string;
 };
 
-export type UpdateUserByIdDTOType = {
+export type UpdateUserByIdDTO = {
   id: string;
-  updatedFields: string[];
   updatedAt: string;
 };
 
-export type DeleteUserByIdDTOType = {
+export type DeleteUserByIdDTO = {
   id: string;
   deletedAt: string;
 };

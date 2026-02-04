@@ -14,25 +14,26 @@ import {
   buildPagination,
   buildUpdateQuery,
 } from "./utils";
-import { SignUpRequestBody } from "../auth/types/request.types";
-import { UserType } from "../shared/types/user.types";
+import { SignUpRequest } from "../auth/types/request.types";
 import {
-  FindAllUsersQueryRequest,
-  FindAllUsersReturn,
-  FindUserFilter,
-  UpdateUserOptions,
+  UsersPage,
+  UserFilter,
+  UserUpdateOptions,
 } from "./types/services.types";
-import { mapUserDocumentToUser } from "./mappers";
+import { UserMapper } from "./mappers";
 import { UserDocument } from "./model/user.document";
+import { FindUsersQuery } from "./types/request.types";
+import { UserCreated } from "../shared/types/user.types";
+import { Types } from "mongoose";
 
 export const createUserService = async (
-  signUpBody: SignUpRequestBody,
+  signUpBody: SignUpRequest,
   session?: mongoose.ClientSession,
-): Promise<UserType> => {
+): Promise<UserCreated> => {
   const { firstName, lastName, username, email, password } = signUpBody;
 
   try {
-    const createdUser = await User.create(
+    const userCreated = await User.create(
       [
         {
           firstName,
@@ -45,7 +46,7 @@ export const createUserService = async (
       { session },
     );
 
-    return mapUserDocumentToUser(createdUser[0]);
+    return UserMapper.toCreated(userCreated[0]);
   } catch (error) {
     if (
       error instanceof mongoose.mongo.MongoServerError &&
@@ -70,9 +71,9 @@ export const createUserService = async (
 };
 
 export const findAllUsersService = async (
-  query: FindAllUsersQueryRequest,
+  query: FindUsersQuery,
   baseUrl: string,
-): Promise<FindAllUsersReturn> => {
+): Promise<UsersPage> => {
   const { fields, sort, limit = 10, offset = 0, ...rest } = query;
 
   try {
@@ -119,8 +120,8 @@ export const findAllUsersService = async (
 };
 
 export const findUserService = async (
-  filter: FindUserFilter,
-): Promise<UserType> => {
+  filter: UserFilter,
+): Promise<UserDocument> => {
   try {
     const document = await User.findOne(filter);
 
@@ -132,7 +133,7 @@ export const findUserService = async (
       );
     }
 
-    return mapUserDocumentToUser(document);
+    return document;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
 
@@ -145,7 +146,7 @@ export const findUserService = async (
 };
 
 export const findUserDocumentService = async (
-  filter: FindUserFilter,
+  filter: UserFilter,
   options?: { select?: string },
 ): Promise<UserDocument> => {
   try {
@@ -178,10 +179,10 @@ export const findUserDocumentService = async (
 };
 
 export const updateUserByIdService = async (
-  id: string,
-  options: UpdateUserOptions,
+  id: string | Types.ObjectId,
+  options: UserUpdateOptions,
   session?: mongoose.ClientSession,
-): Promise<UserType> => {
+): Promise<UserDocument> => {
   try {
     const updateQuery = buildUpdateQuery(options);
 
@@ -206,7 +207,7 @@ export const updateUserByIdService = async (
       );
     }
 
-    return mapUserDocumentToUser(updatedDocument);
+    return updatedDocument;
   } catch (error) {
     if (error instanceof NotFoundError || error instanceof BadRequestError)
       throw error;

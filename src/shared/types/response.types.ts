@@ -1,6 +1,6 @@
 import { Response } from "express";
 
-export type TypedResponse<T> = Response<{
+export type ApiResponse<T> = Response<{
   success: boolean;
   message: string;
   data: T;

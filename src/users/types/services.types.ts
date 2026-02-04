@@ -1,6 +1,4 @@
-import { UserType } from "../../shared/types/user.types";
-
-export type PaginationType = {
+export type Pagination = {
   total: number;
   limit: number;
   offset: number;
@@ -8,29 +6,18 @@ export type PaginationType = {
   previousUrl: string | null;
 };
 
-export type FindAllUsersQueryRequest = {
-  fields?: string[];
-  sort?: string;
-  limit?: number;
-  offset?: number;
-  fist_name?: string;
-  last_name?: string;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type FindAllUsersReturn = {
+export type UsersPage = {
   results: UserType[];
-  pagination: PaginationType;
+  pagination: Pagination;
 };
 
-export type FindUserFilter = {
+export type UserFilter = {
   _id?: string;
   username?: string;
   email?: string;
 };
 
-export type UpdateUserOptions = {
+export type UserUpdateOptions = {
   set?: {
     firstName?: string;
     lastName?: string;
