@@ -1,7 +1,7 @@
 import z from "zod";
 import { userIdSchema } from "../schemas";
 
-export type FindUsersQuery = {
+export type FindUsersQueryRequest = {
   fields?: string;
   sort?: string;
   limit?: number;
@@ -12,10 +12,10 @@ export type FindUsersQuery = {
   updated_at?: string;
 };
 
-export type UserIdRequest = z.infer<typeof userIdSchema>;
-
-export type UpdateUserRequest = {
+export type UpdateUserByIdRequest = {
   firstName?: string;
   lastName?: string;
   username?: string;
 };
+
+export type UserByIdRequest = z.infer<typeof userIdSchema>;

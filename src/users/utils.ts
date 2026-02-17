@@ -1,37 +1,19 @@
 import { Request } from "express";
 import { SortOrder } from "mongoose";
 import {
-  AllowedUsersFiltersParams,
-  AllowedUsersFieldsParams,
-  AllowedUsersSortParams,
   AllowedUsersQueryFilters,
   AllowedUsersQueryFields,
   AllowedUsersQuerySort,
-  allowedUsersFiltersParams,
-  allowedUsersFieldsParams,
-  allowedUsersSortParams,
+  allowedUsersQueryFields,
 } from "./constants/user.constants";
-import { UpdateUserOptions } from "./types/services.types";
 import { ENV } from "../infra/env/env";
+import {
+  UserDocumentUpdateOptions,
+  UserUpdateByIdOptions,
+} from "./types/services.types";
 
 const escapeRegex = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-const queryMap: Record<
-  AllowedUsersFiltersParams | AllowedUsersFieldsParams | AllowedUsersSortParams,
-  AllowedUsersQueryFilters | AllowedUsersQueryFields | AllowedUsersQuerySort
-> = {
-  first_name: "firstName",
-  "-first_name": "-firstName",
-  last_name: "lastName",
-  "-last_name": "-lastName",
-  username: "username",
-  "-username": "-username",
-  created_at: "createdAt",
-  "-created_at": "-createdAt",
-  updated_at: "updatedAt",
-  "-updated_at": "-updatedAt",
 };
 
 export const isAllowedParams = <T extends readonly string[]>(
@@ -48,80 +30,56 @@ export const buildBaseUrl = <Q>(req: Request<{}, {}, {}, Q>): string => {
 };
 
 export const buildQueryFilters = (
-  filter: Record<string, any>,
-): Partial<Record<AllowedUsersQueryFilters, any>> => {
-  return Object.entries(filter).reduce(
-    (acc, [key, value]) => {
-      if (
-        allowedUsersFiltersParams.includes(key as AllowedUsersFiltersParams) &&
-        value !== undefined &&
-        value !== null &&
-        value !== ""
-      ) {
-        const mappedKey = queryMap[key as AllowedUsersFiltersParams];
+  filter: Partial<Record<AllowedUsersQueryFilters, string | Date>>,
+): Partial<
+  Record<AllowedUsersQueryFilters, RegExp | { $gte: Date; $lte: Date }>
+> => {
+  const filterQuery: Partial<
+    Record<AllowedUsersQueryFilters, RegExp | { $gte: Date; $lte: Date }>
+  > = {};
 
-        acc[mappedKey as AllowedUsersQueryFilters] = new RegExp(
-          `^${escapeRegex(value)}$`,
-          "i",
-        );
+  for (const [key, value] of Object.entries(filter)) {
+    if (value !== undefined && value !== null && value !== "") {
+      const typedKey = key as AllowedUsersQueryFilters;
+
+      if (typeof value === "string") {
+        filterQuery[typedKey] = new RegExp(`^${escapeRegex(value)}$`, "i");
       }
 
-      return acc;
-    },
-    {} as Partial<Record<AllowedUsersQueryFilters, any>>,
-  );
+      if (value instanceof Date) {
+        const start = new Date(value);
+        start.setUTCHours(0, 0, 0, 0);
+
+        const end = new Date(value);
+        end.setUTCHours(23, 59, 59, 999);
+
+        filterQuery[typedKey] = { $gte: start, $lte: end };
+      }
+    }
+  }
+
+  return filterQuery;
 };
 
-export const buildQueryFields = (
-  fields?: string,
-): Partial<Record<AllowedUsersQueryFields, 1>> => {
-  if (!fields || fields.length === 0) return {};
+export const buildQueryFields = (fields?: AllowedUsersQueryFields[]) => {
+  const finalFields = fields?.length ? fields : [...allowedUsersQueryFields];
 
-  const fieldsArray = fields.split(",");
-
-  return fieldsArray.reduce(
-    (acc, field) => {
-      if (
-        allowedUsersFieldsParams.includes(field as AllowedUsersFieldsParams)
-      ) {
-        const mappedKey = queryMap[field as AllowedUsersFieldsParams];
-
-        acc[mappedKey as AllowedUsersQueryFields] = 1;
-      }
-
-      return acc;
-    },
-    {} as Partial<Record<AllowedUsersQueryFields, 1>>,
-  );
+  return Object.fromEntries(
+    finalFields.map((field) => [field, 1] as const),
+  ) as Partial<Record<AllowedUsersQueryFields, 1>>;
 };
 
 export const buildQuerySort = (
-  sortParams?: string[],
+  sortParams?: AllowedUsersQuerySort[],
 ): [string, SortOrder][] => {
-  if (!sortParams || sortParams.length === 0) return [];
+  if (!sortParams?.length) return [];
 
-  return sortParams.reduce<[string, SortOrder][]>((acc, sort) => {
-    if (!sort) return acc;
+  return sortParams.map((param) => {
+    const direction: SortOrder = param.startsWith("-") ? -1 : 1;
+    const field = param.replace("-", "");
 
-    let field: string;
-    let order: SortOrder;
-
-    if (sort.startsWith("-")) {
-      field = sort.slice(1);
-      order = -1;
-    } else {
-      field = sort;
-      order = 1;
-    }
-
-    if (allowedUsersSortParams.includes(field as AllowedUsersSortParams)) {
-      const mappedKey = queryMap[field as AllowedUsersSortParams];
-
-      acc.push([mappedKey, order]);
-    }
-
-    return acc;
-  }, []);
+    return [field, direction];
+  });
 };
 
 export const buildPagination = (
@@ -149,8 +107,8 @@ export const buildPagination = (
   return { nextUrl, previousUrl };
 };
 
-export const buildUpdateQuery = (
-  options: UpdateUserOptions,
+export const buildUserDocumentUpdateQuery = (
+  options: UserDocumentUpdateOptions,
 ): Record<string, any> => {
   const updateQuery: Record<string, any> = {};
 
@@ -167,6 +125,18 @@ export const buildUpdateQuery = (
       },
       {} as Record<string, string>,
     );
+  }
+
+  return updateQuery;
+};
+
+export const buildUserUpdateByIdQuery = (
+  options: UserUpdateByIdOptions,
+): Record<string, any> => {
+  const updateQuery: Record<string, any> = {};
+
+  if (options.set && Object.keys(options.set).length > 0) {
+    updateQuery.$set = options.set;
   }
 
   return updateQuery;

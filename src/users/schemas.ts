@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { signUpBaseSchema } from "../auth/schemas";
 import {
-  allowedUsersFieldsParams,
-  AllowedUsersFieldsParams,
-  allowedUsersSortParams,
-  AllowedUsersSortParams,
   allowedUpdateUserFields,
+  AllowedUsersFieldsParams,
+  allowedUsersFieldsParams,
+  AllowedUsersQueryFields,
+  AllowedUsersQuerySort,
+  AllowedUsersSortParams,
+  allowedUsersSortParams,
+  queryMap,
 } from "./constants/user.constants";
 import { isAllowedParams } from "./utils";
 
@@ -27,7 +30,7 @@ export const userIdSchema = z.object({
 
 export const userEmailSchema = signUpBaseSchema.pick({ email: true });
 
-export const findAllUsersSchema = z
+export const findUsersSchema = z
   .object({
     fields: z
       .string({
@@ -54,7 +57,13 @@ export const findAllUsersSchema = z
         },
       )
       .transform((data) =>
-        data ? (data.split(",") as AllowedUsersFieldsParams[]) : undefined,
+        data
+          ? (data
+              .split(",")
+              .map(
+                (field) => queryMap[field as AllowedUsersFieldsParams],
+              ) as AllowedUsersQueryFields[])
+          : undefined,
       ),
 
     sort: z
@@ -81,10 +90,16 @@ export const findAllUsersSchema = z
         },
       )
       .transform((data) =>
-        data ? (data.split(",") as AllowedUsersSortParams[]) : undefined,
+        data
+          ? (data
+              .split(",")
+              .map(
+                (sort) => queryMap[sort as AllowedUsersSortParams],
+              ) as AllowedUsersQuerySort[])
+          : undefined,
       ),
 
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     offset: z.coerce.number().int().nonnegative().optional(),
 
     first_name: z
@@ -104,23 +119,33 @@ export const findAllUsersSchema = z
       .string({
         invalid_type_error: '"created_at" query parameter must be a string.',
       })
-      .optional()
-      .refine((data) => data === undefined || !isNaN(Date.parse(data)), {
-        message: '"created_at" must be a valid ISO date string.',
+      .regex(/^\d{4}-\d{2}-\d{2}$/, {
+        message: '"created_at" must be in the format YYYY-MM-DD.',
       })
+      .optional()
       .transform((data) => (data ? new Date(data) : undefined)),
 
     updated_at: z
       .string({
         invalid_type_error: '"updated_at" query parameter must be a string.',
       })
-      .optional()
-      .refine((data) => data === undefined || !isNaN(Date.parse(data)), {
-        message: '"updated_at" must be a valid ISO date string.',
+      .regex(/^\d{4}-\d{2}-\d{2}$/, {
+        message: '"updated_at" must be in the format YYYY-MM-DD.',
       })
+      .optional()
       .transform((data) => (data ? new Date(data) : undefined)),
   })
-  .strict();
+  .strict()
+  .transform((data) => ({
+    fields: data.fields,
+    sort: data.sort,
+    limit: data.limit,
+    offset: data.offset,
+    firstName: data.first_name,
+    lastName: data.last_name,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }));
 
 export const updateUserSchema = z
   .object({

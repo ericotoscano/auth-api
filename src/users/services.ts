@@ -3,7 +3,6 @@ import User from "./model/user.model";
 import {
   BadRequestError,
   ConflictError,
-  CustomError,
   InternalServerError,
   NotFoundError,
 } from "../errors/custom-error";
@@ -12,19 +11,25 @@ import {
   buildQueryFilters,
   buildQuerySort,
   buildPagination,
-  buildUpdateQuery,
+  buildUserDocumentUpdateQuery,
+  buildUserUpdateByIdQuery,
 } from "./utils";
 import { SignUpRequest } from "../auth/types/request.types";
 import {
   UsersPage,
   UserFilter,
-  UserUpdateOptions,
+  UserDocumentUpdateOptions,
+  FindUsersQuery,
+  UserProjection,
+  UserFoundById,
+  UserUpdateByIdOptions,
+  UserUpdatedById,
 } from "./types/services.types";
-import { UserMapper } from "./mappers";
+import { UserMapper } from "./mapper";
 import { UserDocument } from "./model/user.document";
-import { FindUsersQuery } from "./types/request.types";
 import { UserCreated } from "../shared/types/user.types";
 import { Types } from "mongoose";
+import { logger } from "../infra/logger/logger";
 
 export const createUserService = async (
   signUpBody: SignUpRequest,
@@ -70,70 +75,69 @@ export const createUserService = async (
   }
 };
 
-export const findAllUsersService = async (
+export const findUsersService = async (
   query: FindUsersQuery,
   baseUrl: string,
+  originalQuery: Record<string, any>,
 ): Promise<UsersPage> => {
-  const { fields, sort, limit = 10, offset = 0, ...rest } = query;
+  const { fields, sort, limit = 10, offset = 0, ...filters } = query;
 
   try {
-    const queryFilters = buildQueryFilters(rest);
+    const filterQuery = buildQueryFilters(filters);
+    const selectFields = buildQueryFields(fields);
+    const sortQuery = buildQuerySort(sort);
 
-    const queryFields = buildQueryFields(fields);
-
-    const sortArray = Array.isArray(sort) ? sort : sort ? [sort] : [];
-
-    const querySort = buildQuerySort(sortArray);
-
-    const documents = await User.find(queryFilters, queryFields)
-      .sort(querySort)
-      .skip(offset)
-      .limit(limit);
-
-    const results = documents.map((doc) => mapUserDocumentToUser(doc));
-
-    const total = await User.countDocuments(queryFilters);
+    const [results, total] = await Promise.all([
+      User.find(filterQuery)
+        .select(selectFields)
+        .sort(sortQuery)
+        .skip(offset)
+        .limit(limit)
+        .lean<UserProjection[]>(),
+      User.countDocuments(filterQuery),
+    ]);
 
     const { nextUrl, previousUrl } = buildPagination(
       baseUrl,
       total,
       limit,
       offset,
-      query,
+      originalQuery,
     );
 
     return {
       results,
       pagination: { total, limit, offset, nextUrl, previousUrl },
     };
-  } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      throw error;
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error(error.message, { stack: error.stack });
     }
-
     throw new InternalServerError(
       "Failed to Retrieve Users",
-      "An unexpected error occurred while loading users from the database. Please try again later.",
+      "An unexpected error occurred while loading users from the database.",
       "SYSTEM_UNEXPECTED",
     );
   }
 };
 
-export const findUserService = async (
-  filter: UserFilter,
-): Promise<UserDocument> => {
+export const findUserByIdService = async (
+  id: string,
+): Promise<UserFoundById> => {
   try {
-    const document = await User.findOne(filter);
+    const userDoc = await User.findById(id);
 
-    if (!document) {
+    if (!userDoc) {
       throw new NotFoundError(
         "User Not Found",
-        "No user matching the provided criteria was found.",
-        `USER_NOT_FOUND`,
+        "No user matching the provided ID was found.",
+        "USER_NOT_FOUND",
       );
     }
 
-    return document;
+    const userFoundById = UserMapper.toFoundById(userDoc);
+
+    return userFoundById;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
 
@@ -141,6 +145,63 @@ export const findUserService = async (
       "Failed to Retrieve User",
       "An unexpected error occurred while loading requested user. Please try again later.",
       "SYSTEM_UNEXPECTED",
+    );
+  }
+};
+
+export const updateUserByIdService = async (
+  id: string,
+  options: UserUpdateByIdOptions,
+): Promise<UserUpdatedById> => {
+  try {
+    const userUpdateQuery = buildUserUpdateByIdQuery(options);
+
+    if (Object.keys(userUpdateQuery).length === 0) {
+      throw new BadRequestError(
+        "Invalid Update Payload",
+        "At least one field must be provided to update or remove.",
+        "INVALID_UPDATE_PAYLOAD",
+      );
+    }
+
+    const userDoc = await User.findByIdAndUpdate(id, userUpdateQuery, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!userDoc) {
+      throw new NotFoundError(
+        "User Not Found",
+        "No user was found to update.",
+        "USER_NOT_FOUND",
+      );
+    }
+
+    const userUpdatedById = UserMapper.toUpdatedById(userDoc);
+
+    return userUpdatedById;
+  } catch (error) {
+    if (error instanceof NotFoundError || error instanceof BadRequestError)
+      throw error;
+
+    if (
+      error instanceof mongoose.mongo.MongoServerError &&
+      error.code === 11000
+    ) {
+      const field = Object.keys(error.keyPattern)[0];
+
+      throw new ConflictError(
+        "User Update Conflict",
+        "Some field provided to update is already in use.",
+        "USER_CONFLICT",
+        { field },
+      );
+    }
+
+    throw new InternalServerError(
+      "Failed to Update User",
+      `An unexpected error occurred while updating the user. Please try again later.`,
+      "USER_UPDATE_FAILED",
     );
   }
 };
@@ -156,9 +217,9 @@ export const findUserDocumentService = async (
       query.select(options.select);
     }
 
-    const document = await query;
+    const userDoc = await query;
 
-    if (!document) {
+    if (!userDoc) {
       throw new NotFoundError(
         "User Not Found",
         "No user matching the provided criteria was found.",
@@ -166,7 +227,7 @@ export const findUserDocumentService = async (
       );
     }
 
-    return document;
+    return userDoc;
   } catch (error) {
     if (error instanceof NotFoundError) throw error;
 
@@ -178,15 +239,15 @@ export const findUserDocumentService = async (
   }
 };
 
-export const updateUserByIdService = async (
+export const updateUserDocumentByIdService = async (
   id: string | Types.ObjectId,
-  options: UserUpdateOptions,
+  options: UserDocumentUpdateOptions,
   session?: mongoose.ClientSession,
 ): Promise<UserDocument> => {
   try {
-    const updateQuery = buildUpdateQuery(options);
+    const userDocUpdateQuery = buildUserDocumentUpdateQuery(options);
 
-    if (Object.keys(updateQuery).length === 0) {
+    if (Object.keys(userDocUpdateQuery).length === 0) {
       throw new BadRequestError(
         "Invalid Update Payload",
         "At least one field must be provided to update or remove.",
@@ -194,12 +255,16 @@ export const updateUserByIdService = async (
       );
     }
 
-    const updatedDocument = await User.findByIdAndUpdate(id, updateQuery, {
-      new: true,
-      session,
-    });
+    const updatedUserDoc = await User.findByIdAndUpdate(
+      id,
+      userDocUpdateQuery,
+      {
+        new: true,
+        session,
+      },
+    );
 
-    if (!updatedDocument) {
+    if (!updatedUserDoc) {
       throw new NotFoundError(
         "User Not Found",
         "No user was found to update.",
@@ -207,7 +272,7 @@ export const updateUserByIdService = async (
       );
     }
 
-    return updatedDocument;
+    return updatedUserDoc;
   } catch (error) {
     if (error instanceof NotFoundError || error instanceof BadRequestError)
       throw error;
@@ -239,9 +304,9 @@ export const deleteUserByIdService = async (
   session?: mongoose.ClientSession,
 ): Promise<void> => {
   try {
-    const deletedDocument = await User.findByIdAndDelete(id, { session });
+    const userDoc = await User.findByIdAndDelete(id, { session });
 
-    if (!deletedDocument) {
+    if (!userDoc) {
       throw new NotFoundError(
         "User Not Found",
         `No user was found to delete.`,

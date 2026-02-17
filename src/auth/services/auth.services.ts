@@ -9,15 +9,14 @@ import {
 import { createTokenService } from "./token.services";
 import {
   createUserService,
-  updateUserByIdService,
-  findUserService,
+  updateUserDocumentByIdService,
   findUserDocumentService,
 } from "../../users/services";
 import { SignUpRequest } from "../types/request.types";
 import { sendEmailService } from "../../infra/mail/mail.service";
 import { EmailTokenVerified } from "../types/token.types";
 import { mongoose } from "../../infra/db/mongoose";
-import { UserMapper } from "../../users/mappers";
+import { UserMapper } from "../../users/mapper";
 import {
   UserSignedUp,
   UserSession,
@@ -42,7 +41,7 @@ export const signUpService = async (
 
     const verificationToken = createTokenService({ username }, "verification");
 
-    await updateUserByIdService(
+    await updateUserDocumentByIdService(
       _id,
       {
         set: { verificationToken },
@@ -93,7 +92,7 @@ export const loginService = async (
     );
     const refreshToken = createTokenService({ id }, "refresh");
 
-    const updatedUserDoc = await updateUserByIdService(_id, {
+    const updatedUserDoc = await updateUserDocumentByIdService(_id, {
       set: { refreshToken },
     });
 
@@ -116,7 +115,7 @@ export const verifyService = async (
   const { _id } = userForVerification;
 
   try {
-    const updatedUserDoc = await updateUserByIdService(_id, {
+    const updatedUserDoc = await updateUserDocumentByIdService(_id, {
       set: { isVerified: true },
       unset: ["verificationToken"],
     });
@@ -142,7 +141,7 @@ export const resendVerificationEmailService = async (
   try {
     const verificationToken = createTokenService({ username }, "verification");
 
-    await updateUserByIdService(_id, {
+    await updateUserDocumentByIdService(_id, {
       set: { verificationToken },
     });
 
@@ -189,7 +188,7 @@ export const resetPasswordService = async (
   }
 
   try {
-    await updateUserByIdService(_id, {
+    await updateUserDocumentByIdService(_id, {
       set: { password: newPassword },
       unset: ["resetPasswordToken"],
     });
@@ -219,7 +218,7 @@ export const sendResetPasswordEmailService = async (
       "resetPassword",
     );
 
-    await updateUserByIdService(_id, { set: { resetPasswordToken } });
+    await updateUserDocumentByIdService(_id, { set: { resetPasswordToken } });
 
     const emailSent = await sendEmailService("resetPassword", {
       email,
@@ -255,7 +254,7 @@ export const refreshUserAccessTokenService = async (
     const accessToken = createTokenService({ id, username, email }, "access");
     const refreshToken = createTokenService({ id }, "refresh");
 
-    const updatedUserDoc = await updateUserByIdService(_id, {
+    const updatedUserDoc = await updateUserDocumentByIdService(_id, {
       set: { refreshToken },
     });
 
@@ -277,7 +276,7 @@ export const logoutService = async (
   const { _id } = userForAccess;
 
   try {
-    await updateUserByIdService(_id, { unset: ["refreshToken"] });
+    await updateUserDocumentByIdService(_id, { unset: ["refreshToken"] });
   } catch (error) {
     throw new InternalServerError(
       "Logout Failed",

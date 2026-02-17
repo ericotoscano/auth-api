@@ -7,4 +7,3 @@ export type UserCreated = {
   isVerified: boolean;
   createdAt: Date;
 };
-

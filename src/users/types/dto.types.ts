@@ -1,7 +1,7 @@
-import { PaginationType } from "./services.types";
+import { Pagination } from "./services.types";
 
 export type FindUsersDTO = {
-  pagination: PaginationType;
+  pagination: Pagination;
   results: {
     id: string;
     firstName?: string;
@@ -17,8 +17,8 @@ export type FindUserByIdDTO = {
   firstName: string;
   lastName: string;
   username: string;
-  isVerified: boolean;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type UpdateUserByIdDTO = {

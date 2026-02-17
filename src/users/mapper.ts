@@ -9,6 +9,7 @@ import {
 } from "../auth/types/services.types";
 import { UserCreated } from "../shared/types/user.types";
 import { UserDocument } from "./model/user.document";
+import { UserFoundById, UserUpdatedById } from "./types/services.types";
 
 export class UserMapper {
   static toCreated(user: UserDocument): UserCreated {
@@ -101,6 +102,38 @@ export class UserMapper {
       _id: user._id,
       username: user.username,
       email: user.email,
+    };
+  }
+
+  static toFoundById(user: UserDocument): UserFoundById {
+    if (
+      !user.firstName ||
+      !user.lastName ||
+      !user.username ||
+      !user.createdAt ||
+      !user.updatedAt
+    ) {
+      throw new Error("Invalid UserDocument for UserForFoundById");
+    }
+
+    return {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+
+  static toUpdatedById(user: UserDocument): UserUpdatedById {
+    if (!user.updatedAt) {
+      throw new Error("Invalid UserDocument for UserForUpdatedById");
+    }
+
+    return {
+      _id: user._id,
+      updatedAt: user.updatedAt,
     };
   }
 }

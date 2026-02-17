@@ -3,20 +3,23 @@ import {
   FindUsersDTO,
   UpdateUserByIdDTO,
 } from "./types/dto.types";
-import { Pagination } from "./types/services.types";
+import {
+  Pagination,
+  UserFoundById,
+  UserProjection,
+  UserUpdatedById,
+} from "./types/services.types";
 
 export class FindUsersDTOMapper {
-  static toJSON(documents: UserType[], pagination: Pagination): FindUsersDTO {
-    const results = documents.map((doc) => {
-      return {
-        id: doc._id,
-        firstName: doc.firstName,
-        lastName: doc.lastName,
-        username: doc.username,
-        createdAt: doc.createdAt,
-        updatedAt: doc.updatedAt,
-      };
-    });
+  static toJSON(users: UserProjection[], pagination: Pagination): FindUsersDTO {
+    const results = users.map((user) => ({
+      id: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      createdAt: user.createdAt?.toISOString(),
+      updatedAt: user.updatedAt?.toISOString(),
+    }));
 
     return {
       pagination,
@@ -26,23 +29,23 @@ export class FindUsersDTOMapper {
 }
 
 export class FindUserByIdDTOMapper {
-  static toJSON(user: UserType): FindUserByIdDTO {
+  static toJSON(user: UserFoundById): FindUserByIdDTO {
     return {
-      id: user._id,
+      id: user._id.toString(),
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 }
 
 export class UpdateUserByIdDTOMapper {
-  static toJSON(user: UserType): UpdateUserByIdDTO {
+  static toJSON(user: UserUpdatedById): UpdateUserByIdDTO {
     return {
-      id: user._id,
-      updatedAt: user.updatedAt,
+      id: user._id.toString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 }

@@ -1,3 +1,29 @@
+import { Types } from "mongoose";
+import {
+  AllowedUsersQueryFields,
+  AllowedUsersQuerySort,
+} from "../constants/user.constants";
+
+export type UserProjection = {
+  _id: Types.ObjectId;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+export type FindUsersQuery = {
+  fields?: AllowedUsersQueryFields[];
+  sort?: AllowedUsersQuerySort[];
+  limit?: number;
+  offset?: number;
+  firstName?: string;
+  lastName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Pagination = {
   total: number;
   limit: number;
@@ -7,7 +33,7 @@ export type Pagination = {
 };
 
 export type UsersPage = {
-  results: UserType[];
+  results: UserProjection[];
   pagination: Pagination;
 };
 
@@ -17,7 +43,25 @@ export type UserFilter = {
   email?: string;
 };
 
-export type UserUpdateOptions = {
+export type UserFoundById = {
+  _id: Types.ObjectId;
+  firstName: string;
+  lastName: string;
+  username: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type UserUpdatedById = {
+  _id: Types.ObjectId;
+  updatedAt: Date;
+};
+
+export type UserUpdateByIdOptions = {
+  set: { firstName?: string; lastName?: string; username?: string };
+};
+
+export type UserDocumentUpdateOptions = {
   set?: {
     firstName?: string;
     lastName?: string;
