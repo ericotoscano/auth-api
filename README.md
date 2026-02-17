@@ -23,12 +23,12 @@ Projeto que implementa um sistema de autenticação completo, com foco em segura
 
 A API trabalha com **quatro tipos de token**, cada um com função e nível de proteção específicos.
 
-| Token | Função | Onde fica | Duração |
-|------|------|----------|--------|
-| Verification | Confirmar conta | Email → body | Curta |
-| Reset Password | Autorizar troca de senha | Email → Authorization | Curta |
-| Access | Autorizar chamadas à API | Authorization header | Curta |
-| Refresh | Manter sessão ativa | Cookie httpOnly | Longa |
+| Token          | Função                   | Onde fica             | Duração |
+| -------------- | ------------------------ | --------------------- | ------- |
+| Verification   | Confirmar conta          | Email → body          | Curta   |
+| Reset Password | Autorizar troca de senha | Email → Authorization | Curta   |
+| Access         | Autorizar chamadas à API | Authorization header  | Curta   |
+| Refresh        | Manter sessão ativa      | Cookie httpOnly       | Longa   |
 
 ---
 
@@ -78,7 +78,7 @@ A API trabalha com **quatro tipos de token**, cada um com função e nível de p
 ### 🔄 Refresh Token
 
 1. Access token expira
-2. Frontend chama `/token/refresh`
+2. Frontend chama `/auth/token/refresh`
 3. API valida:
    - JWT do refresh
    - hash no banco (`bcrypt.compare`)
@@ -93,7 +93,7 @@ A API trabalha com **quatro tipos de token**, cada um com função e nível de p
 
 ### 🚪 Logout
 
-1. Frontend chama `/logout`
+1. Frontend chama `/auth/logout`
 2. API valida refresh token
 3. Remove refresh token do banco
 4. Limpa cookie
@@ -118,13 +118,25 @@ A API trabalha com **quatro tipos de token**, cada um com função e nível de p
 
 ### Auth
 
-POST /auth/signup
-POST /auth/login
-POST /auth/verify
-POST /auth/password/forgot
-POST /auth/password/reset
-POST /token/refresh
-POST /logout
+```http
+POST /api/v1/auth/signup
+POST /api/v1/auth/login
+POST /api/v1/auth/verify
+POST /api/v1/auth/verification/resend
+POST /api/v1/auth/password/forgot
+POST /api/v1/auth/password/reset
+POST /api/v1/auth/token/refresh
+POST /api/v1/auth/logout
+```
+
+### Users
+
+```http
+GET    /api/v1/users
+GET    /api/v1/users/:id
+PATCH  /api/v1/users/:id
+DELETE /api/v1/users/:id
+```
 
 ---
 
@@ -132,7 +144,7 @@ POST /logout
 
 - `validateSchema` – valida e normaliza dados de entrada
 - `validateToken(type)` – valida tokens por tipo
-- `getTokenFromRequest` – define a origem correta de cada token
+- `validateUserSelfPermission` – garante que usuário só altere seus próprios dados
 
 ---
 
@@ -140,54 +152,72 @@ POST /logout
 
 ```
 src/
+├── app.ts
+├── index.ts
 ├── auth/
-│ ├── auth.controller.ts
-│ ├── auth.service.ts
-│ ├── auth.routes.ts
+│   ├── services/
+│   ├── controller.ts
+│   └── routes.ts
 │
-├── user/
-│ ├── user.model.ts
-│ ├── user.service.ts
+├── users/
+│   ├── model/
+│   ├── controller.ts
+│   └── routes.ts
 │
-├── token/
-│ ├── token.types.ts
-│ ├── token.service.ts
+├── infra/
+│   ├── db/
+│   ├── env/
+│   ├── http/
+│   ├── logger/
+│   └── mail/
 │
-├── middlewares/
-│ ├── validateToken.ts
-│ ├── validateSchema.ts
-│
-├── config/
-│ ├── mail.config.ts
-│ ├── CustomError.ts
-│
-└── app.ts
+├── shared/
+├── tests/
+├── types/
+└── errors/
 ```
+
 ---
 
 ## ⚙️ Variáveis de Ambiente
 
 ```env
-APP_ORIGIN=http://localhost
-API_PORT=3000
-
-JWT_ACCESS_SECRET=...
-JWT_REFRESH_SECRET=...
-JWT_EMAIL_SECRET=...
-
-ACCESS_TOKEN_DURATION_MINUTES=15
-REFRESH_TOKEN_DURATION_MINUTES=43200
-VERIFICATION_TOKEN_DURATION_MINUTES=30
-RESET_PASSWORD_TOKEN_DURATION_MINUTES=15
-
-REFRESH_TOKEN_COOKIE_NAME=refreshToken
+APP_NAME=AuthAPI
+APP_ORIGIN=http://localhost:3000
+APP_PORT=3000
+FRONTEND_ORIGIN=http://localhost:5173
 
 NODE_ENV=development
+LOG_LEVEL=info
+
+DEV_DB_URI=mongodb://...
+TEST_DB_URI=mongodb://...
+PROD_DB_URI=mongodb://...
+
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USER=...
+MAIL_PASSWORD=...
+
+VERIFICATION_TOKEN_SECRET_KEY=...
+VERIFICATION_TOKEN_DURATION_MINUTES=30
+
+RESET_PASSWORD_TOKEN_SECRET_KEY=...
+RESET_PASSWORD_TOKEN_DURATION_MINUTES=15
+
+ACCESS_TOKEN_SECRET_KEY=...
+ACCESS_TOKEN_DURATION_MINUTES=15
+
+REFRESH_TOKEN_SECRET_KEY=...
+REFRESH_TOKEN_DURATION_MINUTES=60
+REFRESH_TOKEN_COOKIE_NAME=refreshToken
 ```
+
 ---
 
 ## ▶️ Rodando o Projeto
 
+```bash
 # instalar dependências
 npm install
 
@@ -200,28 +230,9 @@ npm run build
 # produção
 npm start
 
----
-
-## 📄 Documentação da API
-
-A API é documentada com Swagger / OpenAPI.
-
-GET /api-docs
-
-Inclui:
-
-Schemas
-Exemplos de request/response
-Autenticação por rota
-Códigos de erro padronizados
-
----
-
-## 🧪 Testes (planejado)
-
-Testes unitários de services
-Testes de fluxo de autenticação
-Testes de segurança (token inválido, replay, expiração)
+# testes
+npm test
+```
 
 ---
 
@@ -233,7 +244,3 @@ Esta API foi projetada para ser:
 🧠 Fácil de entender
 🧱 Fácil de evoluir
 🚀 Pronta para produção
-
-
-
-
